@@ -1,0 +1,9 @@
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ALLOWED_WS_ORIGINS=["http://localhost:5173"]
