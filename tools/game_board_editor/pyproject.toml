@@ -1,0 +1,23 @@
+[project]
+name = "zc-board-editor"
+version = "0.1.0"
+description = "ZoneControl Game Board Editor - DearPyGui tool for designing game boards"
+requires-python = ">=3.12"
+dependencies = [
+    "dearpygui>=1.11.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+zc-board-editor = "game_board_editor.main:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
