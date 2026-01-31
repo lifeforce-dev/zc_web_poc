@@ -1,0 +1,72 @@
+[
+  {
+    "id": "burn",
+    "name": "Burn",
+    "description": "Reduce two sides of target block by -2 each. Lower cooldown due to defensive/weakening nature.",
+    "can_target_friendly": false,
+    "cooldown_turns": 2,
+    "cost_type": "none",
+    "cost_amount": 0,
+    "development_enabled": true,
+    "gameplay_tag": "Ability.Elemental.Fire.Burn",
+    "display_data": {
+      "icon_path": "abilities/burn.svg"
+    }
+  },
+  {
+    "id": "squirt",
+    "name": "Squirt",
+    "description": "Move a Tile (with its Block) to another Zone. Can be used offensively or defensively.",
+    "can_target_friendly": true,
+    "cooldown_turns": 3,
+    "cost_type": "none",
+    "cost_amount": 0,
+    "development_enabled": true,
+    "gameplay_tag": "Ability.Elemental.Water.Squirt",
+    "display_data": {
+      "icon_path": "abilities/squirt.svg"
+    }
+  },
+  {
+    "id": "grow",
+    "name": "Grow",
+    "description": "Increase two sides of target block by +1 each. Higher cooldown due to offensive buffing power.",
+    "can_target_friendly": true,
+    "cooldown_turns": 4,
+    "cost_type": "none",
+    "cost_amount": 0,
+    "development_enabled": false,
+    "gameplay_tag": "Ability.Elemental.Forest.Grow",
+    "display_data": {
+      "icon_path": "abilities/grow.svg"
+    }
+  },
+  {
+    "id": "freeze",
+    "name": "Freeze",
+    "description": "Target block cannot be flipped for 2 turns. Useful for locking down key positions.",
+    "can_target_friendly": true,
+    "cooldown_turns": 3,
+    "cost_type": "none",
+    "cost_amount": 0,
+    "development_enabled": false,
+    "gameplay_tag": "Ability.Elemental.Ice.Freeze",
+    "display_data": {
+      "icon_path": "abilities/freeze.svg"
+    }
+  },
+  {
+    "id": "rotate",
+    "name": "Rotate",
+    "description": "Rotate the block in your hand clockwise by 90 degrees. Costs 1 rotation charge.",
+    "can_target_friendly": true,
+    "cooldown_turns": 0,
+    "cost_type": "rotation_charge",
+    "cost_amount": 1,
+    "development_enabled": true,
+    "gameplay_tag": "Ability.Universal.Rotate",
+    "display_data": {
+      "icon_path": "abilities/rotate.svg"
+    }
+  }
+]
