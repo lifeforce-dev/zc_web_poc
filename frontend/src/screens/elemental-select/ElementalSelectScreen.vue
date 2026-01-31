@@ -6,6 +6,7 @@ import { matchmakingKey } from '../../injection-keys'
 import ElementalGrid from './components/ElementalGrid.vue'
 import ElementalPreview from './components/ElementalPreview.vue'
 import ElementalDetails from './components/ElementalDetails.vue'
+import MatchmakingOverlay from '../../components/MatchmakingOverlay.vue'
 
 const gameStore = useGameStore()
 const _matchmaking = inject(matchmakingKey)
@@ -117,12 +118,19 @@ onMounted(async () => {
     <footer class="footer">
       <button
         class="btn-ready"
-        :disabled="!selectedElemental"
+        :disabled="!selectedElemental || isSearching"
         @click="handleReady"
       >
         Ready
       </button>
     </footer>
+
+    <!-- Matchmaking Overlay -->
+    <MatchmakingOverlay
+      v-if="isSearching && selectedElemental"
+      :elemental="selectedElemental"
+      @cancel="handleCancelSearch"
+    />
   </div>
 </template>
 
