@@ -19,30 +19,30 @@ defineProps<{
 }
 
 .status-idle {
-  background: #21262d;
-  color: #8b949e;
+  background: var(--palette-status-idle-bg);
+  color: var(--palette-text-secondary);
 }
 
 .status-queueing {
-  background: #1f2937;
-  color: #60a5fa;
+  background: var(--palette-status-queueing-bg);
+  color: var(--palette-status-queueing-fg);
   animation: pulse 2s infinite;
 }
 
 .status-matched {
-  background: #1c2a1c;
-  color: #7ee787;
+  background: var(--palette-status-matched-bg);
+  color: var(--palette-status-matched-fg);
 }
 
 .status-ready {
-  background: #1c2a1c;
-  color: #7ee787;
+  background: var(--palette-status-matched-bg);
+  color: var(--palette-status-matched-fg);
   box-shadow: 0 0 8px rgba(126, 231, 135, 0.3);
 }
 
 .status-disconnected {
-  background: #2d1f1f;
-  color: #f85149;
+  background: var(--palette-status-error-bg);
+  color: var(--palette-error-main);
 }
 
 @keyframes pulse {
