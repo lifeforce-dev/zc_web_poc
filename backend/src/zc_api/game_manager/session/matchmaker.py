@@ -1,9 +1,10 @@
+"""Matchmaker - pairs players waiting for games."""
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
 
-from zc_api.session.registry import SessionRegistry
+from .registry import SessionRegistry
 
 
 @dataclass(slots=True)
@@ -15,6 +16,7 @@ class MatchAssignment:
 @dataclass(slots=True)
 class WaitingEntry:
     name: str
+    elemental: str
     future: asyncio.Future[MatchAssignment]
 
 
@@ -24,10 +26,10 @@ class Matchmaker:
         self._waiting: list[WaitingEntry] = []
         self._lock = asyncio.Lock()
 
-    async def WaitForMatch(self, name: str) -> MatchAssignment:
+    async def wait_for_match(self, name: str, elemental: str) -> MatchAssignment:
         loop = asyncio.get_running_loop()
         future: asyncio.Future[MatchAssignment] = loop.create_future()
-        entry = WaitingEntry(name=name, future=future)
+        entry = WaitingEntry(name=name, elemental=elemental, future=future)
 
         async with self._lock:
             while self._waiting:
@@ -36,7 +38,9 @@ class Matchmaker:
                 if other.future.cancelled():
                     continue
 
-                match_id, token_other, token_self = await self._registry.CreateMatch(other.name, name)
+                match_id, token_other, token_self = await self._registry.create_match(
+                    other.name, other.elemental, name, elemental
+                )
 
                 if not other.future.cancelled():
                     other.future.set_result(MatchAssignment(match_id=match_id, player_token=token_other))
@@ -45,8 +49,4 @@ class Matchmaker:
 
             self._waiting.append(entry)
 
-        try:
-            return await future
-        finally:
-            async with self._lock:
-                self._waiting = [w for w in self._waiting if w is not entry]
+        return await future
