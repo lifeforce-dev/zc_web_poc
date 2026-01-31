@@ -1,0 +1,166 @@
+/**
+ * Theme variables following Material Design naming conventions.
+ * 
+ * Structure mirrors MUI's theme object for future compatibility:
+ * - palette: colors (backgrounds, text, semantic)
+ * - typography: font families, sizes, weights
+ * - spacing: base unit and common values
+ * - shape: border radii, borders
+ * - transitions: durations and easings
+ * 
+ * When this file grows past ~150 lines, split into:
+ *   theme/palette.css
+ *   theme/typography.css
+ *   theme/spacing.css
+ *   theme/shape.css
+ *   theme/transitions.css
+ *   theme/index.css (imports all)
+ */
+
+:root {
+  /* ============================================
+     PALETTE - Colors
+     ============================================ */
+  
+  /* Backgrounds */
+  --palette-background-default: #0d1117;
+  --palette-background-paper: #161b22;
+  --palette-background-elevated: #1c2128;
+  --palette-background-muted: #21262d;
+  
+  /* Text */
+  --palette-text-primary: #c9d1d9;
+  --palette-text-secondary: #8b949e;
+  --palette-text-disabled: #484f58;
+  
+  /* Borders & Dividers */
+  --palette-divider: #30363d;
+  
+  /* Primary (accent) */
+  --palette-primary-main: #58a6ff;
+  --palette-primary-light: #79c0ff;
+  --palette-primary-dark: #388bfd;
+  
+  /* Success */
+  --palette-success-main: #3fb950;
+  --palette-success-light: #56d364;
+  --palette-success-dark: #2ea043;
+  
+  /* Error */
+  --palette-error-main: #f85149;
+  --palette-error-light: #ff7b72;
+  --palette-error-dark: #da3633;
+  
+  /* Warning */
+  --palette-warning-main: #d29922;
+  --palette-warning-light: #e3b341;
+  
+  /* Info (purple) */
+  --palette-info-main: #a371f7;
+  --palette-info-light: #bc8cff;
+  
+  /* Brand colors (game-specific) */
+  --palette-brand-gold: #d4a855;
+  --palette-brand-orange: #e07850;
+  
+  /* Status tints (subtle backgrounds for status indicators) */
+  --palette-status-idle-bg: #21262d;
+  --palette-status-queueing-bg: #1f2937;
+  --palette-status-queueing-fg: #60a5fa;
+  --palette-status-matched-bg: #1c2a1c;
+  --palette-status-matched-fg: #7ee787;
+  --palette-status-error-bg: #2d1f1f;
+  
+  
+  /* ============================================
+     TYPOGRAPHY - Fonts
+     ============================================ */
+  
+  --typography-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --typography-font-family-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, monospace;
+  
+  /* Font sizes */
+  --typography-size-xs: 12px;
+  --typography-size-sm: 13px;
+  --typography-size-base: 14px;
+  --typography-size-md: 15px;
+  --typography-size-lg: 16px;
+  --typography-size-xl: 18px;
+  --typography-size-2xl: 22px;
+  --typography-size-3xl: 28px;
+  --typography-size-4xl: 48px;
+  
+  /* Font weights */
+  --typography-weight-normal: 400;
+  --typography-weight-medium: 500;
+  --typography-weight-semibold: 600;
+  --typography-weight-bold: 700;
+  
+  /* Line heights */
+  --typography-line-height-tight: 1.25;
+  --typography-line-height-normal: 1.5;
+  --typography-line-height-relaxed: 1.75;
+  
+  
+  /* ============================================
+     SPACING - Layout units
+     ============================================ */
+  
+  /* Base unit (8px grid) */
+  --spacing-unit: 8px;
+  
+  /* Common spacing values */
+  --spacing-xs: 4px;   /* 0.5 units */
+  --spacing-sm: 8px;   /* 1 unit */
+  --spacing-md: 16px;  /* 2 units */
+  --spacing-lg: 24px;  /* 3 units */
+  --spacing-xl: 32px;  /* 4 units */
+  --spacing-2xl: 40px; /* 5 units */
+  --spacing-3xl: 60px; /* 7.5 units */
+  
+  
+  /* ============================================
+     SHAPE - Borders & Radii
+     ============================================ */
+  
+  --shape-border-radius-sm: 4px;
+  --shape-border-radius-md: 8px;
+  --shape-border-radius-lg: 12px;
+  --shape-border-radius-full: 9999px;
+  
+  --shape-border-width: 1px;
+  --shape-border-width-thick: 2px;
+  
+  
+  /* ============================================
+     TRANSITIONS - Animation timing
+     ============================================ */
+  
+  /* Durations */
+  --transition-duration-fast: 0.15s;
+  --transition-duration-standard: 0.2s;
+  --transition-duration-slow: 0.3s;
+  --transition-duration-slower: 0.4s;
+  --transition-duration-slowest: 0.5s;
+  
+  /* Easings */
+  --transition-easing-standard: ease;
+  --transition-easing-in: ease-in;
+  --transition-easing-out: ease-out;
+  --transition-easing-in-out: ease-in-out;
+  
+  /* Common combinations */
+  --transition-fast: var(--transition-duration-fast) var(--transition-easing-standard);
+  --transition-standard: var(--transition-duration-standard) var(--transition-easing-standard);
+  --transition-slow: var(--transition-duration-slow) var(--transition-easing-out);
+  
+  
+  /* ============================================
+     SHADOWS - Elevation
+     ============================================ */
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
