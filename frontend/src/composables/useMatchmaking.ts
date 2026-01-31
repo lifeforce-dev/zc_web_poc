@@ -139,6 +139,15 @@ export function useMatchmaking() {
     ws.onerror = () => store.log('Game socket error', 'error')
   }
 
+  function cancelMatchmaking(): void {
+    if (matchmakingSocket) {
+      store.log('Cancelling matchmaking', 'info')
+      closeSocket(matchmakingSocket)
+      matchmakingSocket = null
+      store.setPhase('elemental-select')
+    }
+  }
+
   function sendPing(): void {
     if (!gameSocket || gameSocket.readyState !== WebSocket.OPEN) {
       store.log('Cannot send ping: not connected', 'error')
@@ -164,6 +173,7 @@ export function useMatchmaking() {
 
   return {
     startMatchmaking,
+    cancelMatchmaking,
     sendPing,
     cleanup,
   }

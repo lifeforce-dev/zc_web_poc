@@ -20,6 +20,9 @@ const matchmaking = _matchmaking
 const selectedElemental = ref<ElementalData | null>(null)
 const abilities = computed(() => gameStore.gameData?.abilities || [])
 
+// Check if we're in matchmaking phase
+const isSearching = computed(() => gameStore.phase === 'matchmaking')
+
 const elementals = computed(() => {
   if (!gameStore.gameData) return []
   return gameStore.gameData.elementals
@@ -38,6 +41,10 @@ function selectElemental(elemental: ElementalData): void {
 function handleReady(): void {
   if (!selectedElemental.value) return
   matchmaking.startMatchmaking()
+}
+
+function handleCancelSearch(): void {
+  matchmaking.cancelMatchmaking()
 }
 
 onMounted(async () => {

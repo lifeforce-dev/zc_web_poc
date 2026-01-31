@@ -10,6 +10,7 @@ import type { ScreenFlowContext } from './screens/types'
 /** Interface for matchmaking transport functions */
 export interface MatchmakingContext {
   startMatchmaking: () => void
+  cancelMatchmaking: () => void
   sendPing: () => void
   cleanup: () => void
 }
