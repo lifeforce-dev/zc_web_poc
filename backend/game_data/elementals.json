@@ -1,0 +1,54 @@
+[
+  {
+    "id": "fire",
+    "name": "Fire",
+    "description": "Aggressive elemental focused on burning through enemy defenses. Excels at removing problematic blocks.",
+    "color": "#da3633",
+    "primary_ability_id": "burn",
+    "neutral_ability_slot": null,
+    "development_enabled": true,
+    "gameplay_tag": "GameData.Elemental.Fire",
+    "display_data": {
+      "icon_path": "elementals/fire.svg"
+    }
+  },
+  {
+    "id": "water",
+    "name": "Water",
+    "description": "Defensive elemental with board control abilities. Strengthens blocks to dominate flip battles.",
+    "color": "#58a6ff",
+    "primary_ability_id": "squirt",
+    "neutral_ability_slot": null,
+    "development_enabled": true,
+    "gameplay_tag": "GameData.Elemental.Water",
+    "display_data": {
+      "icon_path": "elementals/water.svg"
+    }
+  },
+  {
+    "id": "forest",
+    "name": "Forest",
+    "description": "Growth-focused elemental that strengthens over time. Spawns additional blocks to control zones.",
+    "color": "#3fb950",
+    "primary_ability_id": "grow",
+    "neutral_ability_slot": null,
+    "development_enabled": false,
+    "gameplay_tag": "GameData.Elemental.Forest",
+    "display_data": {
+      "icon_path": "elementals/forest.svg"
+    }
+  },
+  {
+    "id": "ice",
+    "name": "Ice",
+    "description": "Control-focused elemental that freezes opponents. Locks down key positions to prevent counter-plays.",
+    "color": "#79c0ff",
+    "primary_ability_id": "freeze",
+    "neutral_ability_slot": null,
+    "development_enabled": false,
+    "gameplay_tag": "GameData.Elemental.Ice",
+    "display_data": {
+      "icon_path": "elementals/ice.svg"
+    }
+  }
+]
