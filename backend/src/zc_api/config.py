@@ -39,9 +39,9 @@ class Settings(BaseSettings):
     # Base URL for game assets in API responses. In dev, must be full URL since frontend runs on different port.
     # In prod with same-origin deployment, can use the mount path directly.
     asset_base_url: str = Field(
-        default="http://localhost:8000/assets",
+        default="/assets",
         validation_alias=AliasChoices("ASSET_BASE_URL"),
-        description="Base URL for game assets in API responses (e.g., http://localhost:8000/assets)",
+        description="Base URL for game assets in API responses (e.g., /assets or http://localhost:8000/assets)",
     )
 
     allowed_origins: list[str] = []

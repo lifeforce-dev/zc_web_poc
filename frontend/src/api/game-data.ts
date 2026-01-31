@@ -1,6 +1,7 @@
 import type { GameData } from '../types/game-data'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+// In production (same-origin), use relative paths. In dev, VITE_API_BASE can override.
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 export async function fetchGameData(): Promise<GameData> {
   const [elementalsRes, abilitiesRes] = await Promise.all([

@@ -56,7 +56,10 @@ export function getWsBaseUrl(): string {
     return envBase.trim().replace(/\/$/, '')
   }
 
-  return 'ws://127.0.0.1:8000'
+  // In production, derive WebSocket URL from current page origin.
+  // In dev, set VITE_WS_BASE_URL to point to backend.
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
 }
 
 export function buildWsUrl(path: string, params?: Record<string, string>): string {
