@@ -1,0 +1,262 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ZoneControl Web POC",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/sessions": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Sessions",
+        "description": "List all active game sessions with connection info. Disabled in production.",
+        "operationId": "list_sessions_admin_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Sessions Admin Sessions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/elementals": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get Available Elementals",
+        "description": "Get elementals available for player selection.\n\nReturns only elementals that are enabled for the current game version.",
+        "operationId": "get_available_elementals_api_catalog_elementals_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableElementalsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/abilities": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get Available Abilities",
+        "description": "Get abilities available in the game.\n\nReturns only abilities that are enabled for the current game version.",
+        "operationId": "get_available_abilities_api_catalog_abilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableAbilitiesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AvailableAbilitiesResponse": {
+        "properties": {
+          "abilities": {
+            "items": {
+              "$ref": "#/components/schemas/AvailableAbility"
+            },
+            "type": "array",
+            "title": "Abilities",
+            "description": "Available abilities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "abilities"
+        ],
+        "title": "AvailableAbilitiesResponse",
+        "description": "Response containing abilities available in game."
+      },
+      "AvailableAbility": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique ability identifier"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "What the ability does"
+          },
+          "display_data": {
+            "$ref": "#/components/schemas/DisplayDataResponse",
+            "description": "Presentation assets with resolved URLs"
+          },
+          "can_target_friendly": {
+            "type": "boolean",
+            "title": "Can Target Friendly",
+            "description": "Can target own blocks"
+          },
+          "cooldown_turns": {
+            "type": "integer",
+            "title": "Cooldown Turns",
+            "description": "Turns before reuse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "display_data",
+          "can_target_friendly",
+          "cooldown_turns"
+        ],
+        "title": "AvailableAbility",
+        "description": "Ability available in the game."
+      },
+      "AvailableElemental": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique elemental identifier"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Flavor text"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "description": "Theme color (hex)"
+          },
+          "primary_ability_id": {
+            "type": "string",
+            "title": "Primary Ability Id",
+            "description": "ID of primary ability"
+          },
+          "display_data": {
+            "$ref": "#/components/schemas/DisplayDataResponse",
+            "description": "Presentation assets with resolved URLs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "color",
+          "primary_ability_id",
+          "display_data"
+        ],
+        "title": "AvailableElemental",
+        "description": "Elemental available for player selection."
+      },
+      "AvailableElementalsResponse": {
+        "properties": {
+          "elementals": {
+            "items": {
+              "$ref": "#/components/schemas/AvailableElemental"
+            },
+            "type": "array",
+            "title": "Elementals",
+            "description": "Available elementals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "elementals"
+        ],
+        "title": "AvailableElementalsResponse",
+        "description": "Response containing elementals available for selection."
+      },
+      "DisplayDataResponse": {
+        "properties": {
+          "icon_url": {
+            "type": "string",
+            "title": "Icon Url",
+            "description": "Full URL to icon asset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "icon_url"
+        ],
+        "title": "DisplayDataResponse",
+        "description": "Presentation data with resolved URLs for client consumption."
+      }
+    }
+  }
+}
