@@ -318,6 +318,19 @@ onMounted(async () => {
 
 /* Mobile: single column stack */
 @media (max-width: 768px) {
+  .elemental-selection {
+    padding: 20px 16px;  /* Reduced padding on mobile */
+    min-height: auto;    /* Don't force full viewport height */
+  }
+  
+  .header {
+    margin-bottom: 20px;
+  }
+  
+  .selection-layout {
+    flex: none;  /* Don't expand to fill space - let content dictate height */
+  }
+  
   .selection-layout.has-selection {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -336,6 +349,11 @@ onMounted(async () => {
   
   .details-shell {
     max-width: 100%;
+  }
+  
+  .footer {
+    margin-top: 20px;
+    padding-bottom: env(safe-area-inset-bottom, 20px);  /* iOS safe area */
   }
 }
 
