@@ -8,7 +8,7 @@ from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-KDevAllowedWsOrigins: list[str] = [
+KDevAllowedOrigins: list[str] = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
@@ -30,12 +30,26 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("ZC_ENV", "ENV", "ENVIRONMENT"),
     )
 
-    allowed_ws_origins: list[str] = []
+    # Mount path for static assets (where FastAPI serves files from).
+    asset_mount_path: str = Field(
+        default="/assets",
+        description="Local mount path for static assets",
+    )
 
-    @field_validator("allowed_ws_origins", mode="before")
+    # Base URL for game assets in API responses. In dev, must be full URL since frontend runs on different port.
+    # In prod with same-origin deployment, can use the mount path directly.
+    asset_base_url: str = Field(
+        default="http://localhost:8000/assets",
+        validation_alias=AliasChoices("ASSET_BASE_URL"),
+        description="Base URL for game assets in API responses (e.g., http://localhost:8000/assets)",
+    )
+
+    allowed_origins: list[str] = []
+
+    @field_validator("allowed_origins", mode="before")
     @classmethod
-    def ParseAllowedWsOrigins(cls, value: object) -> list[str]:
-        default_value = cls.model_fields["allowed_ws_origins"].default
+    def ParseOriginsList(cls, value: object, info) -> list[str]:
+        default_value = cls.model_fields["allowed_origins"].default
         if not isinstance(default_value, list):
             default_value = []
 
@@ -53,23 +67,23 @@ class Settings(BaseSettings):
             if raw.startswith("["):
                 parsed = json.loads(raw)
                 if not isinstance(parsed, list):
-                    raise ValueError("ALLOWED_WS_ORIGINS must be a JSON list of strings")
+                    raise ValueError("ALLOWED_ORIGINS must be a JSON list of strings")
 
                 return [str(v).strip() for v in parsed if str(v).strip()]
 
             return [part.strip() for part in raw.split(",") if part.strip()]
 
-        raise TypeError("ALLOWED_WS_ORIGINS must be a string or list")
+        raise TypeError("ALLOWED_ORIGINS must be a string or list")
 
     @model_validator(mode="after")
-    def FinalizeAllowedWsOrigins(self) -> "Settings":
-        if self.environment == "dev" and not self.allowed_ws_origins:
-            self.allowed_ws_origins = list(KDevAllowedWsOrigins)
+    def FinalizeOrigins(self) -> "Settings":
+        if self.environment == "dev" and not self.allowed_origins:
+            self.allowed_origins = list(KDevAllowedOrigins)
 
-        if self.environment == "prod" and not self.allowed_ws_origins:
+        if self.environment == "prod" and not self.allowed_origins:
             raise ValueError(
-                "allowed_ws_origins is required in prod; set ALLOWED_WS_ORIGINS to your Pages origin, "
-                'example: ALLOWED_WS_ORIGINS="https://lifeforce-dev.github.io"'
+                "allowed_origins is required in prod; set ALLOWED_ORIGINS to your frontend origin, "
+                'e.g. ALLOWED_ORIGINS="https://yourname.github.io"'
             )
 
         return self

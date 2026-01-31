@@ -1,11 +1,11 @@
 """
-TagRegistry - Singleton managing all tag registrations.
+TagRegistry - manages all tag registrations.
 
 The registry interns tag path strings and assigns unique IDs.
 Parent tags are created automatically when requesting child tags.
 
 Example:
-    >>> registry = TagRegistry.get()
+    >>> registry = TagRegistry()
     >>> tag = registry.request_tag("Player.Owner.P1")
     >>> # Also creates "Player" and "Player.Owner" as parents
 """
@@ -17,35 +17,24 @@ from .gameplay_tag import GameplayTag
 
 class TagRegistry:
     """
-    Singleton registry for gameplay tag management.
+    Registry for gameplay tag management.
     
     Responsibilities:
     - Intern tag path strings (deduplicate)
     - Assign unique IDs to tags
     - Track parent-child relationships
     - Enforce strict mode (reject unknown tags)
+    
+    Instance should be stored in app.state during FastAPI lifespan.
     """
-    
-    _instance: TagRegistry | None = None
-    
+
     def __init__(self) -> None:
-        """Private constructor. Use TagRegistry.get() instead."""
-        if TagRegistry._instance is not None:
-            raise RuntimeError("TagRegistry is a singleton. Use TagRegistry.get()")
-        
         # Index 0 is reserved for invalid/none tag
         self._strings: list[str] = [""]
         self._lookup: dict[str, int] = {"": 0}
         self._parent_ids: list[int] = [0]
         self._strict_mode: bool = False
-    
-    @classmethod
-    def get(cls) -> TagRegistry:
-        """Get the singleton instance."""
-        if cls._instance is None:
-            cls._instance = TagRegistry()
-        return cls._instance
-    
+
     def request_tag(self, tag_path: str) -> GameplayTag:
         """
         Get or create a tag by path.
