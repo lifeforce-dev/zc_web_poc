@@ -10,12 +10,7 @@ def root() -> dict[str, object]:
     return {
         "service": "zc_web_poc",
         "status": "ok",
-        "endpoints": {
-            "health": "/health",
-            "sessions": "/admin/sessions",
-            "ws_matchmaking": "/ws/matchmaking?name=...",
-            "ws_game": "/ws/game/{match_id}?token=...",
-        },
+        "docs": "/docs",
     }
 
 

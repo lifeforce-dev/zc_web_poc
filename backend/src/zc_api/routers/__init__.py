@@ -1,3 +1,4 @@
-__all__ = ["health", "ws_matchmaking", "ws_game"]
+"""FastAPI routers organized by domain."""
+__all__ = ["admin", "catalog", "game", "health", "matchmaking"]
 
-from zc_api.routers import health, ws_game, ws_matchmaking
+from zc_api.routers import admin, catalog, game, health, matchmaking

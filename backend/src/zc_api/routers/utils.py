@@ -9,7 +9,7 @@ def IsAllowedWsOrigin(origin: str | None) -> bool:
     if origin is None:
         return False
 
-    return origin in settings.allowed_ws_origins
+    return origin in settings.allowed_origins
 
 
 async def RejectIfOriginNotAllowed(websocket: WebSocket) -> bool:
