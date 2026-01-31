@@ -15,6 +15,7 @@ export type ServerGameReady = {
   match_id: string
   you: string
   opponent: string
+  opponent_elemental: string
 }
 
 export type ServerPinged = {
