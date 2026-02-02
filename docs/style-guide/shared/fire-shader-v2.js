@@ -1,5 +1,6 @@
-// Fire Shader - Burn Ability Effects
-// Contains: Firenado animation, Primed state, Orbit targeting
+// Fire Shader v2 - Shared Context Architecture
+// Uses a single WebGL context per shader type, blits to visible canvases via 2D drawImage.
+// This avoids mobile WebGL context limits (typically 8-16 max).
 
 // ========================================
 // CONFIGURATION
@@ -17,12 +18,11 @@ const fireConfig = {
   turbulence: 1.0,
   collapseSpeed: 1.0,
   coreHeat: 1.0,
-  // Fire Wall specific (Primed/Burning states)
-  wallSpread: 0.30,    // How wide the fire wall extends (lower = tighter to edge)
-  wallInset: 0.09,     // Push wall inward from edge
-  wallPulse: 0.05,     // Breathing animation amplitude
-  edgeSoftness: 0.36,  // Organic edge distortion (0 = sharp square, higher = wavy flames)
-  edgeFade: 0.08,      // Soft fade at canvas edges (higher = more fade, softer boundary)
+  wallSpread: 0.30,
+  wallInset: 0.09,
+  wallPulse: 0.05,
+  edgeSoftness: 0.36,
+  edgeFade: 0.08,
 };
 
 const orbitConfig = {
@@ -38,7 +38,7 @@ const orbitConfig = {
 };
 
 // ========================================
-// FIRE SHADER
+// SHADER SOURCES
 // ========================================
 
 const fireVertexSrc = `#version 300 es
@@ -98,38 +98,24 @@ const fireFragmentSrc = `#version 300 es
     return sum;
   }
   
-  // Get corner softness multiplier (1.0 at edges, higher at corners)
   float cornerFactor(vec2 p) {
-    // Corners are where both x and y are far from center
     float cx = abs(p.x);
     float cy = abs(p.y);
     return 1.0 + smoothstep(0.2, 0.4, cx) * smoothstep(0.2, 0.4, cy) * 0.5;
   }
   
-  // Get organic radius variation based on angle and time
-  // Returns a multiplier (0.7 to 1.3) for the burn radius
   float flameRadiusVariation(float angle, float t, float softness) {
     if (softness < 0.001) return 1.0;
-    
-    // Low frequency waves for overall shape variation
     float wave1 = sin(angle * 3.0 + t * 0.8) * 0.15;
     float wave2 = sin(angle * 5.0 - t * 1.2) * 0.08;
-    
-    // High frequency noise for flame licks
     float flameLicks = fbm(vec2(angle * 4.0 + t * 2.0, t * 0.5)) * 0.2;
-    
     return 1.0 + (wave1 + wave2 + flameLicks) * softness;
   }
   
-  // Get corner rounding offset - pushes fire inward at corners
   float cornerRounding(vec2 p, float softness) {
     if (softness < 0.001) return 0.0;
-    
-    // Distance from the inscribed circle vs rectangle edge
     float rectDist = max(abs(p.x), abs(p.y));
     float circleDist = length(p);
-    
-    // At corners, circle is further than rect - use this difference to round
     float cornerPush = max(0.0, circleDist - rectDist * 0.9) * softness * 0.8;
     return cornerPush;
   }
@@ -184,19 +170,14 @@ const fireFragmentSrc = `#version 300 es
       fire = max(max(burning * 0.85, flameEdge), smolder * 0.6) * intensity;
     }
     else if (phase < 1.5) {
-      // Primed state: fire wall surrounds the number
       float spread = u_wallSpread + sin(t * 1.5) * u_wallPulse;
       float fireNoise = fbm(uv * 6.0 + t * 0.5);
       float fireNoise2 = fbm(uv * 10.0 - t * 0.3);
       
-      // Apply organic shape modifiers
       float radiusVar = flameRadiusVariation(angle, t, u_edgeSoftness);
       float cornerPush = cornerRounding(p, u_edgeSoftness);
       
-      // Calculate burn radius with organic variation
       float burnRadius = spread * 0.6 * radiusVar;
-      
-      // Apply inset and corner rounding to edge distance
       float adjustedEdgeDist = edgeDist - u_wallInset - cornerPush;
       float fireFront = adjustedEdgeDist - burnRadius + fireNoise * 0.15 * turb + fireNoise2 * 0.08 * turb;
       
@@ -225,7 +206,6 @@ const fireFragmentSrc = `#version 300 es
       fire = max(max(burning * 0.85, flameEdge), smolder * 0.6) * intensity;
     }
     else {
-      // Burning state: firenado collapses inward
       float spread = u_wallSpread + collapse * 0.65;
       float rotSpeed = u_rotationSpeed;
       float spiralAngle = angle + spin * dist * tightness + t * rotSpeed * spin;
@@ -291,7 +271,6 @@ const fireFragmentSrc = `#version 300 es
       color *= (1.0 - dissipate * 0.5);
     }
     
-    // Soft fade at canvas edges to avoid hard rectangular clipping
     float edgeFadeAmount = smoothstep(0.0, u_edgeFade, edgeDist);
     fire *= edgeFadeAmount;
     
@@ -299,10 +278,6 @@ const fireFragmentSrc = `#version 300 es
     fragColor = vec4(color * fire, fire);
   }
 `;
-
-// ========================================
-// ORBIT SHADER
-// ========================================
 
 const orbitVertexSrc = `#version 300 es
   in vec2 a_position;
@@ -385,13 +360,17 @@ const orbitFragmentSrc = `#version 300 es
 `;
 
 // ========================================
-// INITIALIZATION
+// SHARED CONTEXT MANAGER
 // ========================================
 
-const fireInstances = {};
-const orbitInstances = {};
+// Single offscreen canvas + WebGL context for each shader type
+let fireRenderer = null;
+let orbitRenderer = null;
 
-// Visual debug for mobile
+// All registered display canvases
+const fireTargets = {};   // id -> { canvas, ctx2d, mode, burnStart, valueEl, origValue, valueDecremented }
+const orbitTargets = {};  // id -> { canvas, ctx2d }
+
 function debugLog(msg) {
   const panel = document.getElementById('debug-panel');
   if (panel) {
@@ -400,21 +379,17 @@ function debugLog(msg) {
   }
 }
 
-function initFireCanvas(canvasId, mode) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) {
-    debugLog('[FIRE] Canvas not found: ' + canvasId);
-    return null;
-  }
+function createSharedFireRenderer() {
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 38;
+  offscreen.height = 34;
   
-  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false });
+  const gl = offscreen.getContext('webgl2', { alpha: true, premultipliedAlpha: false });
   if (!gl) {
-    debugLog('[FIRE] WebGL2 FAILED: ' + canvasId);
+    debugLog('[FIRE] Shared WebGL2 context FAILED');
     return null;
   }
   
-  canvas.width = 38;
-  canvas.height = 34;
   gl.viewport(0, 0, 38, 34);
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -423,7 +398,7 @@ function initFireCanvas(canvasId, mode) {
   gl.shaderSource(vs, fireVertexSrc);
   gl.compileShader(vs);
   if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-    debugLog('[FIRE] VS error ' + canvasId + ': ' + gl.getShaderInfoLog(vs));
+    debugLog('[FIRE] VS error: ' + gl.getShaderInfoLog(vs));
     return null;
   }
   
@@ -431,7 +406,7 @@ function initFireCanvas(canvasId, mode) {
   gl.shaderSource(fs, fireFragmentSrc);
   gl.compileShader(fs);
   if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-    debugLog('[FIRE] FS error ' + canvasId + ': ' + gl.getShaderInfoLog(fs));
+    debugLog('[FIRE] FS error: ' + gl.getShaderInfoLog(fs));
     return null;
   }
   
@@ -440,13 +415,11 @@ function initFireCanvas(canvasId, mode) {
   gl.attachShader(program, fs);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    debugLog('[FIRE] Link error ' + canvasId + ': ' + gl.getProgramInfoLog(program));
+    debugLog('[FIRE] Link error: ' + gl.getProgramInfoLog(program));
     return null;
   }
-  gl.useProgram(program);
   
-  const rect = canvas.getBoundingClientRect();
-  debugLog('[FIRE] OK: ' + canvasId + ' (w=' + rect.width.toFixed(0) + ', h=' + rect.height.toFixed(0) + ')');
+  gl.useProgram(program);
   
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -456,50 +429,44 @@ function initFireCanvas(canvasId, mode) {
   gl.enableVertexAttribArray(aPos);
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
   
-  fireInstances[canvasId] = {
+  debugLog('[FIRE] Shared renderer created');
+  
+  return {
+    canvas: offscreen,
     gl,
     program,
-    uTime: gl.getUniformLocation(program, 'u_time'),
-    uPhase: gl.getUniformLocation(program, 'u_phase'),
-    uSpin: gl.getUniformLocation(program, 'u_spin'),
-    uCollapse: gl.getUniformLocation(program, 'u_collapse'),
-    uDissipate: gl.getUniformLocation(program, 'u_dissipate'),
-    uWallThickness: gl.getUniformLocation(program, 'u_wallThickness'),
-    uFlameIntensity: gl.getUniformLocation(program, 'u_flameIntensity'),
-    uTurbulence: gl.getUniformLocation(program, 'u_turbulence'),
-    uSpinTightness: gl.getUniformLocation(program, 'u_spinTightness'),
-    uRotationSpeed: gl.getUniformLocation(program, 'u_rotationSpeed'),
-    uCoreHeat: gl.getUniformLocation(program, 'u_coreHeat'),
-    uWallSpread: gl.getUniformLocation(program, 'u_wallSpread'),
-    uWallInset: gl.getUniformLocation(program, 'u_wallInset'),
-    uWallPulse: gl.getUniformLocation(program, 'u_wallPulse'),
-    uEdgeSoftness: gl.getUniformLocation(program, 'u_edgeSoftness'),
-    uEdgeFade: gl.getUniformLocation(program, 'u_edgeFade'),
-    mode,
-    burnStart: null,
-    valueEl: null,
-    origValue: 0,
-    valueDecremented: false
+    uniforms: {
+      uTime: gl.getUniformLocation(program, 'u_time'),
+      uPhase: gl.getUniformLocation(program, 'u_phase'),
+      uSpin: gl.getUniformLocation(program, 'u_spin'),
+      uCollapse: gl.getUniformLocation(program, 'u_collapse'),
+      uDissipate: gl.getUniformLocation(program, 'u_dissipate'),
+      uWallThickness: gl.getUniformLocation(program, 'u_wallThickness'),
+      uFlameIntensity: gl.getUniformLocation(program, 'u_flameIntensity'),
+      uTurbulence: gl.getUniformLocation(program, 'u_turbulence'),
+      uSpinTightness: gl.getUniformLocation(program, 'u_spinTightness'),
+      uRotationSpeed: gl.getUniformLocation(program, 'u_rotationSpeed'),
+      uCoreHeat: gl.getUniformLocation(program, 'u_coreHeat'),
+      uWallSpread: gl.getUniformLocation(program, 'u_wallSpread'),
+      uWallInset: gl.getUniformLocation(program, 'u_wallInset'),
+      uWallPulse: gl.getUniformLocation(program, 'u_wallPulse'),
+      uEdgeSoftness: gl.getUniformLocation(program, 'u_edgeSoftness'),
+      uEdgeFade: gl.getUniformLocation(program, 'u_edgeFade'),
+    }
   };
-  
-  return fireInstances[canvasId];
 }
 
-function initOrbitCanvas(canvasId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) {
-    debugLog('[ORBIT] Canvas not found: ' + canvasId);
-    return;
-  }
+function createSharedOrbitRenderer() {
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 50;
+  offscreen.height = 46;
   
-  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false });
+  const gl = offscreen.getContext('webgl2', { alpha: true, premultipliedAlpha: false });
   if (!gl) {
-    debugLog('[ORBIT] WebGL2 FAILED: ' + canvasId);
-    return;
+    debugLog('[ORBIT] Shared WebGL2 context FAILED');
+    return null;
   }
   
-  canvas.width = 50;
-  canvas.height = 46;
   gl.viewport(0, 0, 50, 46);
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -508,16 +475,16 @@ function initOrbitCanvas(canvasId) {
   gl.shaderSource(vs, orbitVertexSrc);
   gl.compileShader(vs);
   if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-    debugLog('[ORBIT] VS error ' + canvasId + ': ' + gl.getShaderInfoLog(vs));
-    return;
+    debugLog('[ORBIT] VS error: ' + gl.getShaderInfoLog(vs));
+    return null;
   }
   
   const fs = gl.createShader(gl.FRAGMENT_SHADER);
   gl.shaderSource(fs, orbitFragmentSrc);
   gl.compileShader(fs);
   if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-    debugLog('[ORBIT] FS error ' + canvasId + ': ' + gl.getShaderInfoLog(fs));
-    return;
+    debugLog('[ORBIT] FS error: ' + gl.getShaderInfoLog(fs));
+    return null;
   }
   
   const program = gl.createProgram();
@@ -525,11 +492,10 @@ function initOrbitCanvas(canvasId) {
   gl.attachShader(program, fs);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    debugLog('[ORBIT] Link error ' + canvasId + ': ' + gl.getProgramInfoLog(program));
-    return;
+    debugLog('[ORBIT] Link error: ' + gl.getProgramInfoLog(program));
+    return null;
   }
   
-  debugLog('[ORBIT] OK: ' + canvasId);
   gl.useProgram(program);
   
   const buffer = gl.createBuffer();
@@ -540,20 +506,146 @@ function initOrbitCanvas(canvasId) {
   gl.enableVertexAttribArray(aPos);
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
   
-  orbitInstances[canvasId] = {
+  debugLog('[ORBIT] Shared renderer created');
+  
+  return {
+    canvas: offscreen,
     gl,
     program,
-    uTime: gl.getUniformLocation(program, 'u_time'),
-    uOrbCount: gl.getUniformLocation(program, 'u_orbCount'),
-    uOrbitSpeed: gl.getUniformLocation(program, 'u_orbitSpeed'),
-    uOrbitRadius: gl.getUniformLocation(program, 'u_orbitRadius'),
-    uOrbSize: gl.getUniformLocation(program, 'u_orbSize'),
-    uTailLength: gl.getUniformLocation(program, 'u_tailLength'),
-    uIntensity: gl.getUniformLocation(program, 'u_intensity'),
-    uCenterGlow: gl.getUniformLocation(program, 'u_centerGlow'),
-    uFlicker: gl.getUniformLocation(program, 'u_flicker'),
-    uOrbDrift: gl.getUniformLocation(program, 'u_orbDrift')
+    uniforms: {
+      uTime: gl.getUniformLocation(program, 'u_time'),
+      uOrbCount: gl.getUniformLocation(program, 'u_orbCount'),
+      uOrbitSpeed: gl.getUniformLocation(program, 'u_orbitSpeed'),
+      uOrbitRadius: gl.getUniformLocation(program, 'u_orbitRadius'),
+      uOrbSize: gl.getUniformLocation(program, 'u_orbSize'),
+      uTailLength: gl.getUniformLocation(program, 'u_tailLength'),
+      uIntensity: gl.getUniformLocation(program, 'u_intensity'),
+      uCenterGlow: gl.getUniformLocation(program, 'u_centerGlow'),
+      uFlicker: gl.getUniformLocation(program, 'u_flicker'),
+      uOrbDrift: gl.getUniformLocation(program, 'u_orbDrift'),
+    }
   };
+}
+
+// ========================================
+// REGISTRATION API
+// ========================================
+
+function registerFireCanvas(canvasId, mode) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    debugLog('[FIRE] Canvas not found: ' + canvasId);
+    return null;
+  }
+  
+  // Set canvas size
+  canvas.width = 38;
+  canvas.height = 34;
+  
+  // Get 2D context for blitting
+  const ctx2d = canvas.getContext('2d');
+  if (!ctx2d) {
+    debugLog('[FIRE] 2D context failed: ' + canvasId);
+    return null;
+  }
+  
+  fireTargets[canvasId] = {
+    canvas,
+    ctx2d,
+    mode,
+    burnStart: null,
+    valueEl: null,
+    origValue: 0,
+    valueDecremented: false
+  };
+  
+  debugLog('[FIRE] Registered: ' + canvasId + ' (' + mode + ')');
+  return fireTargets[canvasId];
+}
+
+function registerOrbitCanvas(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    debugLog('[ORBIT] Canvas not found: ' + canvasId);
+    return null;
+  }
+  
+  canvas.width = 50;
+  canvas.height = 46;
+  
+  const ctx2d = canvas.getContext('2d');
+  if (!ctx2d) {
+    debugLog('[ORBIT] 2D context failed: ' + canvasId);
+    return null;
+  }
+  
+  orbitTargets[canvasId] = { canvas, ctx2d };
+  
+  debugLog('[ORBIT] Registered: ' + canvasId);
+  return orbitTargets[canvasId];
+}
+
+// ========================================
+// RENDERING
+// ========================================
+
+function renderFireEffect(t, phase, spin, collapse, dissipate) {
+  if (!fireRenderer) return;
+  
+  const gl = fireRenderer.gl;
+  const u = fireRenderer.uniforms;
+  
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(fireRenderer.program);
+  
+  gl.uniform1f(u.uTime, t);
+  gl.uniform1f(u.uPhase, phase);
+  gl.uniform1f(u.uSpin, spin);
+  gl.uniform1f(u.uCollapse, collapse);
+  gl.uniform1f(u.uDissipate, dissipate);
+  gl.uniform1f(u.uWallThickness, fireConfig.wallThickness);
+  gl.uniform1f(u.uFlameIntensity, fireConfig.flameIntensity);
+  gl.uniform1f(u.uTurbulence, fireConfig.turbulence);
+  gl.uniform1f(u.uSpinTightness, fireConfig.spinTightness);
+  gl.uniform1f(u.uRotationSpeed, fireConfig.rotationSpeed);
+  gl.uniform1f(u.uCoreHeat, fireConfig.coreHeat);
+  gl.uniform1f(u.uWallSpread, fireConfig.wallSpread);
+  gl.uniform1f(u.uWallInset, fireConfig.wallInset);
+  gl.uniform1f(u.uWallPulse, fireConfig.wallPulse);
+  gl.uniform1f(u.uEdgeSoftness, fireConfig.edgeSoftness);
+  gl.uniform1f(u.uEdgeFade, fireConfig.edgeFade);
+  
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function renderOrbitEffect(t) {
+  if (!orbitRenderer) return;
+  
+  const gl = orbitRenderer.gl;
+  const u = orbitRenderer.uniforms;
+  
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(orbitRenderer.program);
+  
+  gl.uniform1f(u.uTime, t);
+  gl.uniform1f(u.uOrbCount, orbitConfig.orbCount);
+  gl.uniform1f(u.uOrbitSpeed, orbitConfig.orbitSpeed);
+  gl.uniform1f(u.uOrbitRadius, orbitConfig.orbitRadius);
+  gl.uniform1f(u.uOrbSize, orbitConfig.orbSize);
+  gl.uniform1f(u.uTailLength, orbitConfig.tailLength);
+  gl.uniform1f(u.uIntensity, orbitConfig.intensity);
+  gl.uniform1f(u.uCenterGlow, orbitConfig.centerGlow);
+  gl.uniform1f(u.uFlicker, orbitConfig.flicker);
+  gl.uniform1f(u.uOrbDrift, orbitConfig.orbDrift);
+  
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function blitToTarget(sourceCanvas, target) {
+  target.ctx2d.clearRect(0, 0, target.canvas.width, target.canvas.height);
+  target.ctx2d.drawImage(sourceCanvas, 0, 0);
 }
 
 // ========================================
@@ -639,39 +731,23 @@ function setupWallControls() {
 }
 
 // ========================================
-// ANIMATION
+// ANIMATION LOOP
 // ========================================
 
 function triggerBurnAnimation() {
   const now = performance.now();
   
-  // Trigger overview demos
-  if (fireInstances['fire-burn-1']) {
-    fireInstances['fire-burn-1'].burnStart = now;
-    fireInstances['fire-burn-1'].valueDecremented = false;
+  // Reset all burn targets
+  for (const id of Object.keys(fireTargets)) {
+    const target = fireTargets[id];
+    if (target.mode === 'burn') {
+      target.burnStart = now;
+      target.valueDecremented = false;
+      if (target.valueEl) {
+        target.valueEl.textContent = target.origValue;
+      }
+    }
   }
-  if (fireInstances['fire-burn-2']) {
-    fireInstances['fire-burn-2'].burnStart = now;
-    fireInstances['fire-burn-2'].valueDecremented = false;
-  }
-  const el1 = document.getElementById('burn-val-1');
-  const el2 = document.getElementById('burn-val-2');
-  if (el1) el1.textContent = '3';
-  if (el2) el2.textContent = '2';
-  
-  // Trigger tuning demos
-  if (fireInstances['tune-burn-1']) {
-    fireInstances['tune-burn-1'].burnStart = now;
-    fireInstances['tune-burn-1'].valueDecremented = false;
-  }
-  if (fireInstances['tune-burn-2']) {
-    fireInstances['tune-burn-2'].burnStart = now;
-    fireInstances['tune-burn-2'].valueDecremented = false;
-  }
-  const tel1 = document.getElementById('tune-burn-val-1');
-  const tel2 = document.getElementById('tune-burn-val-2');
-  if (tel1) tel1.textContent = '3';
-  if (tel2) tel2.textContent = '2';
 }
 
 let lastAutoLoop = 0;
@@ -680,28 +756,33 @@ const autoLoopDelay = 6000;
 function animateFire(time) {
   const t = time * 0.001;
   
-  // Auto-loop logic
-  if (!fireInstances['fire-burn-1']?.burnStart && time - lastAutoLoop > autoLoopDelay) {
+  // Auto-loop burn animation
+  const anyBurnActive = Object.values(fireTargets).some(tgt => tgt.mode === 'burn' && tgt.burnStart);
+  if (!anyBurnActive && time - lastAutoLoop > autoLoopDelay) {
     triggerBurnAnimation();
     lastAutoLoop = time;
   }
   
-  for (const [id, state] of Object.entries(fireInstances)) {
+  // Group targets by their computed state to minimize shader switches
+  // But since we have one shared context, we just iterate and render+blit
+  
+  for (const [id, target] of Object.entries(fireTargets)) {
     let phase, spin, collapse, dissipate;
     
-    if (state.mode === 'target') {
+    if (target.mode === 'target') {
       phase = 0.0;
       spin = 0.0;
       collapse = 0.0;
       dissipate = 0.0;
-    } else if (state.mode === 'primed') {
+    } else if (target.mode === 'primed') {
       phase = 1.0;
       spin = 0.0;
       collapse = 0.0;
       dissipate = 0.0;
     } else {
-      if (state.burnStart) {
-        const elapsed = time - state.burnStart;
+      // burn mode
+      if (target.burnStart) {
+        const elapsed = time - target.burnStart;
         const duration = fireConfig.duration * 1000;
         const resetDelay = 2000;
         const progress = elapsed / duration;
@@ -712,9 +793,9 @@ function animateFire(time) {
           collapse = 0.0;
           dissipate = 0.0;
         } else if (progress >= 1.0) {
-          state.burnStart = null;
-          if (state.valueEl) {
-            state.valueEl.textContent = state.origValue;
+          target.burnStart = null;
+          if (target.valueEl) {
+            target.valueEl.textContent = target.origValue;
           }
           phase = 1.0;
           spin = 0.0;
@@ -744,9 +825,9 @@ function animateFire(time) {
             dissipate = fadeProgress;
           }
           
-          if (progress > 0.5 && state.valueEl && !state.valueDecremented) {
-            state.valueEl.textContent = state.origValue - 1;
-            state.valueDecremented = true;
+          if (progress > 0.5 && target.valueEl && !target.valueDecremented) {
+            target.valueEl.textContent = target.origValue - 1;
+            target.valueDecremented = true;
           }
         }
       } else {
@@ -757,174 +838,83 @@ function animateFire(time) {
       }
     }
     
-    const gl = state.gl;
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(state.program);
-    
-    gl.uniform1f(state.uTime, t);
-    gl.uniform1f(state.uPhase, phase);
-    gl.uniform1f(state.uSpin, spin);
-    gl.uniform1f(state.uCollapse, collapse);
-    gl.uniform1f(state.uDissipate, dissipate);
-    gl.uniform1f(state.uWallThickness, fireConfig.wallThickness);
-    gl.uniform1f(state.uFlameIntensity, fireConfig.flameIntensity);
-    gl.uniform1f(state.uTurbulence, fireConfig.turbulence);
-    gl.uniform1f(state.uSpinTightness, fireConfig.spinTightness);
-    gl.uniform1f(state.uRotationSpeed, fireConfig.rotationSpeed);
-    gl.uniform1f(state.uCoreHeat, fireConfig.coreHeat);
-    gl.uniform1f(state.uWallSpread, fireConfig.wallSpread);
-    gl.uniform1f(state.uWallInset, fireConfig.wallInset);
-    gl.uniform1f(state.uWallPulse, fireConfig.wallPulse);
-    gl.uniform1f(state.uEdgeSoftness, fireConfig.edgeSoftness);
-    gl.uniform1f(state.uEdgeFade, fireConfig.edgeFade);
-    
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Render to offscreen, then blit
+    renderFireEffect(t, phase, spin, collapse, dissipate);
+    blitToTarget(fireRenderer.canvas, target);
   }
   
-  // Render all orbit targeting effects
-  for (const canvasId in orbitInstances) {
-    const instance = orbitInstances[canvasId];
-    const gl = instance.gl;
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(instance.program);
-    gl.uniform1f(instance.uTime, t);
-    gl.uniform1f(instance.uOrbCount, orbitConfig.orbCount);
-    gl.uniform1f(instance.uOrbitSpeed, orbitConfig.orbitSpeed);
-    gl.uniform1f(instance.uOrbitRadius, orbitConfig.orbitRadius);
-    gl.uniform1f(instance.uOrbSize, orbitConfig.orbSize);
-    gl.uniform1f(instance.uTailLength, orbitConfig.tailLength);
-    gl.uniform1f(instance.uIntensity, orbitConfig.intensity);
-    gl.uniform1f(instance.uCenterGlow, orbitConfig.centerGlow);
-    gl.uniform1f(instance.uFlicker, orbitConfig.flicker);
-    gl.uniform1f(instance.uOrbDrift, orbitConfig.orbDrift);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  // Render orbit effect once, blit to all orbit targets
+  if (orbitRenderer && Object.keys(orbitTargets).length > 0) {
+    renderOrbitEffect(t);
+    for (const target of Object.values(orbitTargets)) {
+      blitToTarget(orbitRenderer.canvas, target);
+    }
   }
   
   requestAnimationFrame(animateFire);
 }
 
 // ========================================
-// INITIALIZE ON LOAD
+// INITIALIZATION
 // ========================================
 
-// Track initialization results for debugging
-const initResults = {};
-
-function ensureFireInstance(canvasId, mode) {
-  if (fireInstances[canvasId]) {
-    return fireInstances[canvasId];
+function init() {
+  // Create shared renderers (only 2 WebGL contexts total)
+  fireRenderer = createSharedFireRenderer();
+  orbitRenderer = createSharedOrbitRenderer();
+  
+  if (!fireRenderer) {
+    debugLog('[INIT] Fire renderer failed - effects will not work');
   }
-
-  return initFireCanvas(canvasId, mode);
+  if (!orbitRenderer) {
+    debugLog('[INIT] Orbit renderer failed - orbit effects will not work');
+  }
+  
+  // Register all fire canvases
+  ['fire-primed-1', 'fire-primed-2'].forEach(id => registerFireCanvas(id, 'primed'));
+  ['fire-burn-1', 'fire-burn-2'].forEach(id => registerFireCanvas(id, 'burn'));
+  ['tune-primed-1', 'tune-primed-2'].forEach(id => registerFireCanvas(id, 'primed'));
+  ['tune-burn-1', 'tune-burn-2'].forEach(id => registerFireCanvas(id, 'burn'));
+  
+  // Register orbit canvases
+  registerOrbitCanvas('orbit-target');
+  registerOrbitCanvas('tune-orbit');
+  
+  // Setup burn demo value elements
+  if (fireTargets['fire-burn-1']) {
+    fireTargets['fire-burn-1'].valueEl = document.getElementById('burn-val-1');
+    fireTargets['fire-burn-1'].origValue = 3;
+  }
+  if (fireTargets['fire-burn-2']) {
+    fireTargets['fire-burn-2'].valueEl = document.getElementById('burn-val-2');
+    fireTargets['fire-burn-2'].origValue = 2;
+  }
+  if (fireTargets['tune-burn-1']) {
+    fireTargets['tune-burn-1'].valueEl = document.getElementById('tune-burn-val-1');
+    fireTargets['tune-burn-1'].origValue = 3;
+  }
+  if (fireTargets['tune-burn-2']) {
+    fireTargets['tune-burn-2'].valueEl = document.getElementById('tune-burn-val-2');
+    fireTargets['tune-burn-2'].origValue = 2;
+  }
+  
+  // Setup controls
+  setupFireControls();
+  setupOrbitControls();
+  setupWallControls();
+  
+  // Click to replay burn animations
+  document.getElementById('burn-demo-block')?.addEventListener('click', triggerBurnAnimation);
+  document.getElementById('tune-burn-demo-block')?.addEventListener('click', triggerBurnAnimation);
+  
+  // Start first burn animation after 2 seconds
+  setTimeout(triggerBurnAnimation, 2000);
+  
+  // Start animation loop
+  requestAnimationFrame(animateFire);
+  
+  debugLog('[INIT] Complete - Fire targets: ' + Object.keys(fireTargets).length + ', Orbit targets: ' + Object.keys(orbitTargets).length);
 }
 
-function ensureOrbitInstance(canvasId) {
-  if (orbitInstances[canvasId]) {
-    return orbitInstances[canvasId];
-  }
-
-  return initOrbitCanvas(canvasId);
-}
-
-function tryBindBurnValueElements() {
-  if (fireInstances['fire-burn-1'] && !fireInstances['fire-burn-1'].valueEl) {
-    fireInstances['fire-burn-1'].valueEl = document.getElementById('burn-val-1');
-    fireInstances['fire-burn-1'].origValue = 3;
-  }
-  if (fireInstances['fire-burn-2'] && !fireInstances['fire-burn-2'].valueEl) {
-    fireInstances['fire-burn-2'].valueEl = document.getElementById('burn-val-2');
-    fireInstances['fire-burn-2'].origValue = 2;
-  }
-  if (fireInstances['tune-burn-1'] && !fireInstances['tune-burn-1'].valueEl) {
-    fireInstances['tune-burn-1'].valueEl = document.getElementById('tune-burn-val-1');
-    fireInstances['tune-burn-1'].origValue = 3;
-  }
-  if (fireInstances['tune-burn-2'] && !fireInstances['tune-burn-2'].valueEl) {
-    fireInstances['tune-burn-2'].valueEl = document.getElementById('tune-burn-val-2');
-    fireInstances['tune-burn-2'].origValue = 2;
-  }
-}
-
-function observeOnce(elementId, onVisible) {
-  const el = document.getElementById(elementId);
-  if (!el) {
-    debugLog('[INIT] Observe failed, element not found: ' + elementId);
-    return;
-  }
-
-  if (!('IntersectionObserver' in window)) {
-    onVisible();
-    return;
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    if (!entries || entries.length === 0) {
-      return;
-    }
-
-    if (entries.some(e => e.isIntersecting)) {
-      observer.disconnect();
-      onVisible();
-    }
-  }, {
-    root: null,
-    rootMargin: '200px 0px',
-    threshold: 0.01
-  });
-
-  observer.observe(el);
-}
-
-// Initialize only the above-the-fold / live demo canvases immediately.
-// Mobile browsers often have strict WebGL context limits; initializing everything up front
-// can evict earlier contexts (making the live demo appear "broken").
-['fire-primed-1', 'fire-primed-2'].forEach(id => {
-  initResults[id] = ensureFireInstance(id, 'primed');
-});
-
-['fire-burn-1', 'fire-burn-2'].forEach(id => {
-  initResults[id] = ensureFireInstance(id, 'burn');
-});
-
-initResults['orbit-target'] = ensureOrbitInstance('orbit-target');
-
-// Lazy-init tuning canvases when they scroll near the viewport.
-observeOnce('tune-primed-1', () => {
-  ['tune-primed-1', 'tune-primed-2'].forEach(id => {
-    initResults[id] = ensureFireInstance(id, 'primed');
-  });
-
-  tryBindBurnValueElements();
-});
-
-observeOnce('tune-burn-1', () => {
-  ['tune-burn-1', 'tune-burn-2'].forEach(id => {
-    initResults[id] = ensureFireInstance(id, 'burn');
-  });
-
-  tryBindBurnValueElements();
-});
-
-observeOnce('tune-orbit', () => {
-  initResults['tune-orbit'] = ensureOrbitInstance('tune-orbit');
-});
-
-// Setup burn demo value elements (both demos, if initialized)
-tryBindBurnValueElements();
-
-// Setup controls
-setupFireControls();
-setupOrbitControls();
-setupWallControls();
-
-// Click to replay burn animations
-document.getElementById('burn-demo-block')?.addEventListener('click', triggerBurnAnimation);
-document.getElementById('tune-burn-demo-block')?.addEventListener('click', triggerBurnAnimation);
-
-// Start first burn animation after 2 seconds
-setTimeout(triggerBurnAnimation, 2000);
-
-// Start animation loop
-requestAnimationFrame(animateFire);
+// Run on load
+init();

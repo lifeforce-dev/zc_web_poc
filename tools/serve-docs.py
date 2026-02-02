@@ -15,9 +15,12 @@ PORT = 8080
 PROJECT_ROOT = Path(__file__).parent.parent
 
 # Map URL paths to filesystem paths
+# Structure mirrors GitHub Pages deployment:
+#   /docs/         -> docs folder
+#   /game_data/    -> backend/game_data
 PATH_MAPPINGS = {
     "/game_data/": PROJECT_ROOT / "backend" / "game_data",
-    "/": PROJECT_ROOT / "docs",
+    "/docs/": PROJECT_ROOT / "docs",
 }
 
 
@@ -28,21 +31,23 @@ class MultiDirectoryHandler(http.server.SimpleHTTPRequestHandler):
 
         # Check each mapping
         for url_prefix, fs_path in PATH_MAPPINGS.items():
-            if path.startswith(url_prefix) and url_prefix != "/":
+            if path.startswith(url_prefix):
                 relative = path[len(url_prefix) :]
                 return str(fs_path / relative)
 
-        # Default to docs folder
-        relative = path.lstrip("/")
-        return str(PROJECT_ROOT / "docs" / relative)
+        # Redirect root to /docs/
+        if path == "/" or path == "":
+            return str(PROJECT_ROOT / "docs")
+
+        return str(PROJECT_ROOT / path.lstrip("/"))
 
 
 def main():
-    os.chdir(PROJECT_ROOT / "docs")
+    os.chdir(PROJECT_ROOT)
 
     with http.server.HTTPServer(("", PORT), MultiDirectoryHandler) as httpd:
-        print(f"Serving docs at http://localhost:{PORT}")
-        print(f"  /              -> {PROJECT_ROOT / 'docs'}")
+        print(f"Serving at http://localhost:{PORT}")
+        print(f"  /docs/         -> {PROJECT_ROOT / 'docs'}")
         print(f"  /game_data/    -> {PROJECT_ROOT / 'backend' / 'game_data'}")
         print()
         print("Press Ctrl+C to stop")

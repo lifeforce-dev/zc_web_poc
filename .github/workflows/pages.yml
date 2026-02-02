@@ -46,8 +46,9 @@ jobs:
 
       - name: Add docs and game_data to build
         run: |
-          # Copy docs (style-guide, etc.)
-          cp -r docs/* frontend/dist/
+          # Copy docs into /docs subdirectory (not root!)
+          mkdir -p frontend/dist/docs
+          cp -r docs/* frontend/dist/docs/
           
           # Copy game_data assets (single source of truth)
           mkdir -p frontend/dist/game_data
