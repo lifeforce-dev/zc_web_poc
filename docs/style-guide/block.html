@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block Designer - ZoneControl Style Guide</title>
+  <link rel="stylesheet" href="shared/styles.css">
+  <style>
+    /* Block designer layout */
+    .designer-layout {
+      display: flex;
+      gap: 60px;
+      align-items: flex-start;
+      margin-top: 32px;
+    }
+    
+    .preview-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    
+    .preview-block {
+      --icon-opacity: 0.5;
+      --icon-size: 42px;
+      --glow-radius: 6px;
+      --glow-intensity: 1;
+      --icon-brightness: 1;
+      --icon-saturation: 1;
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+    
+    .preview-block .tablet {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, #2a2622 0%, #1a1815 50%, #12100e 100%);
+      border-radius: 4px;
+      border: 2px solid var(--player-color, var(--player1));
+      overflow: hidden;
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .preview-block .tablet::before,
+    .preview-block .tablet::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--gold);
+      opacity: 0.7;
+    }
+    .preview-block .tablet::before { top: 4px; left: 4px; border-right: none; border-bottom: none; }
+    .preview-block .tablet::after { bottom: 4px; right: 4px; border-left: none; border-top: none; }
+    
+    .preview-block .block-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--icon-size);
+      height: var(--icon-size);
+      transition: all 0.2s ease;
+    }
+    
+    .preview-block .block-icon img {
+      width: 100%;
+      height: 100%;
+      opacity: var(--icon-opacity);
+      filter: 
+        drop-shadow(0 0 calc(var(--glow-radius) * var(--glow-intensity)) var(--elemental-glow))
+        brightness(var(--icon-brightness))
+        saturate(var(--icon-saturation));
+      transition: all 0.2s ease;
+    }
+    
+    /* Elemental color variants for preview block */
+    .preview-block.fire { --elemental-color: #e85d04; --elemental-glow: #ff7b00; }
+    .preview-block.water { --elemental-color: #0096c7; --elemental-glow: #48cae4; }
+    .preview-block.forest { --elemental-color: #2d6a4f; --elemental-glow: #52b788; }
+    .preview-block.ice { --elemental-color: #90e0ef; --elemental-glow: #caf0f8; }
+    
+    .preview-block .number {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 24px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      background: linear-gradient(180deg, #2a2622 0%, #1a1815 100%);
+      border: 2px solid var(--gold);
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+    .preview-block .number.north { top: -8px; left: 50%; transform: translateX(-50%); }
+    .preview-block .number.south { bottom: -8px; left: 50%; transform: translateX(-50%); }
+    .preview-block .number.east { right: -8px; top: 50%; transform: translateY(-50%); }
+    .preview-block .number.west { left: -8px; top: 50%; transform: translateY(-50%); }
+    
+    .preset-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: system-ui, sans-serif;
+    }
+    
+    /* Controls panel */
+    .controls-panel {
+      background: var(--bg-paper);
+      border: 1px solid var(--divider);
+      border-radius: 8px;
+      padding: 24px;
+      width: 500px;
+    }
+    
+    .controls-section {
+      margin-bottom: 24px;
+    }
+    
+    .controls-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .controls-section h4 {
+      color: var(--gold);
+      font-size: 14px;
+      font-variant: small-caps;
+      letter-spacing: 1px;
+      margin: 0 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--divider);
+    }
+    
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .control-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .control-label {
+      width: 120px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: system-ui, sans-serif;
+    }
+    
+    .control-slider {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      background: #30363d;
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    .control-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+    }
+    
+    .control-value {
+      width: 60px;
+      text-align: right;
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--gold-bright);
+    }
+    
+    /* Elemental selector */
+    .elemental-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .elemental-btn {
+      padding: 8px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--divider);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .elemental-btn:hover {
+      border-color: var(--gold);
+    }
+    
+    .elemental-btn.active {
+      border-color: var(--btn-color, var(--gold));
+      background: var(--bg-paper);
+      color: var(--btn-color, var(--gold));
+    }
+    
+    .elemental-btn[data-elemental="fire"] { --btn-color: var(--fire); }
+    .elemental-btn[data-elemental="water"] { --btn-color: var(--water); }
+    .elemental-btn[data-elemental="forest"] { --btn-color: var(--forest); }
+    .elemental-btn[data-elemental="ice"] { --btn-color: var(--ice); }
+    
+    /* Presets */
+    .presets-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .preset-btn {
+      padding: 8px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--divider);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .preset-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    
+    /* CSS Output */
+    .css-output {
+      background: var(--bg-default);
+      border: 1px solid var(--divider);
+      border-radius: 4px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      margin-top: 24px;
+    }
+    
+    .css-output-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-family: system-ui, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* Comparison row */
+    .comparison-row {
+      display: flex;
+      gap: 40px;
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--divider);
+    }
+    
+    .comparison-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .comparison-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: system-ui, sans-serif;
+    }
+    
+    /* Static comparison block */
+    .static-block {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    
+    .static-block .tablet {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, #2a2622 0%, #1a1815 50%, #12100e 100%);
+      border-radius: 4px;
+      border: 2px solid var(--player1);
+      overflow: hidden;
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .static-block .tablet::before,
+    .static-block .tablet::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--gold);
+      opacity: 0.7;
+    }
+    .static-block .tablet::before { top: 3px; left: 3px; border-right: none; border-bottom: none; }
+    .static-block .tablet::after { bottom: 3px; right: 3px; border-left: none; border-top: none; }
+    
+    .static-block .block-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      height: 42px;
+    }
+    
+    .static-block.muted .block-icon img {
+      width: 100%;
+      height: 100%;
+      opacity: 0.5;
+      filter: drop-shadow(0 0 6px var(--fire-glow));
+    }
+    
+    .static-block.vibrant .block-icon img {
+      width: 100%;
+      height: 100%;
+      opacity: 0.9;
+      filter: 
+        drop-shadow(0 0 15px var(--fire-glow))
+        brightness(1.2)
+        saturate(1.3);
+    }
+    
+    .static-block .number {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 22px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      background: linear-gradient(180deg, #2a2622 0%, #1a1815 100%);
+      border: 2px solid var(--gold);
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+    .static-block .number.north { top: -6px; left: 50%; transform: translateX(-50%); }
+    .static-block .number.south { bottom: -6px; left: 50%; transform: translateX(-50%); }
+    .static-block .number.east { right: -6px; top: 50%; transform: translateY(-50%); }
+    .static-block .number.west { left: -6px; top: 50%; transform: translateY(-50%); }
+  </style>
+</head>
+<body>
+  <header class="style-header">
+    <h1>Block Designer</h1>
+    <p>Tune block visual properties with live preview</p>
+  </header>
+  
+  <nav class="page-nav">
+    <a href="index.html">Overview</a>
+    <a href="board.html">Board</a>
+    <a href="block.html" class="active">Block</a>
+    <a href="fire.html">Fire</a>
+    <a href="ice.html">Ice</a>
+  </nav>
+  
+  <nav class="toc">
+    <div class="toc-title">On This Page</div>
+    <ul>
+      <li><a href="#designer">Block Designer</a></li>
+      <li><a href="#comparison">Style Comparison</a></li>
+    </ul>
+  </nav>
+  
+  <main class="content">
+    <section class="style-section" id="designer">
+      <h2>Block Designer</h2>
+      <p class="description">
+        Adjust the visual properties of the elemental icon within a block. Use these controls to
+        experiment with different looks - from the current muted style to more vibrant, glowing options.
+      </p>
+      
+      <div class="designer-layout">
+        <div class="preview-area">
+          <div class="preview-block fire p1" id="preview-block">
+            <div class="tablet">
+              <div class="block-icon">
+                <img id="preview-icon" src="/game_data/icons/elementals/fire.svg" alt="Elemental">
+              </div>
+            </div>
+            <span class="number north">3</span>
+            <span class="number east">2</span>
+            <span class="number south">4</span>
+            <span class="number west">1</span>
+          </div>
+          <span class="preset-label" id="preset-label">Custom</span>
+        </div>
+        
+        <div class="controls-panel">
+          <!-- Elemental Selector -->
+          <div class="controls-section">
+            <h4>Elemental Type</h4>
+            <div class="elemental-selector">
+              <button class="elemental-btn active" data-elemental="fire">Fire</button>
+              <button class="elemental-btn" data-elemental="ice">Ice</button>
+              <button class="elemental-btn" data-elemental="water">Water</button>
+              <button class="elemental-btn" data-elemental="forest">Forest</button>
+            </div>
+          </div>
+          
+          <!-- Icon Properties -->
+          <div class="controls-section">
+            <h4>Icon Properties</h4>
+            
+            <div class="control-row">
+              <span class="control-label">Opacity</span>
+              <input type="range" class="control-slider" id="icon-opacity" min="0.1" max="1" step="0.05" value="0.5">
+              <span class="control-value" id="icon-opacity-val">0.50</span>
+            </div>
+            
+            <div class="control-row">
+              <span class="control-label">Size (px)</span>
+              <input type="range" class="control-slider" id="icon-size" min="24" max="70" step="2" value="42">
+              <span class="control-value" id="icon-size-val">42px</span>
+            </div>
+            
+            <div class="control-row">
+              <span class="control-label">Brightness</span>
+              <input type="range" class="control-slider" id="icon-brightness" min="0.5" max="2" step="0.05" value="1">
+              <span class="control-value" id="icon-brightness-val">1.00</span>
+            </div>
+            
+            <div class="control-row">
+              <span class="control-label">Saturation</span>
+              <input type="range" class="control-slider" id="icon-saturation" min="0.5" max="2" step="0.05" value="1">
+              <span class="control-value" id="icon-saturation-val">1.00</span>
+            </div>
+          </div>
+          
+          <!-- Glow Properties -->
+          <div class="controls-section">
+            <h4>Glow Effect</h4>
+            
+            <div class="control-row">
+              <span class="control-label">Glow Radius (px)</span>
+              <input type="range" class="control-slider" id="glow-radius" min="0" max="30" step="1" value="6">
+              <span class="control-value" id="glow-radius-val">6px</span>
+            </div>
+            
+            <div class="control-row">
+              <span class="control-label">Glow Intensity</span>
+              <input type="range" class="control-slider" id="glow-intensity" min="0" max="2" step="0.1" value="1">
+              <span class="control-value" id="glow-intensity-val">1.0</span>
+            </div>
+          </div>
+          
+          <!-- Presets -->
+          <div class="controls-section">
+            <h4>Presets</h4>
+            <div class="presets-row">
+              <button class="preset-btn" data-preset="muted">Muted (Current)</button>
+              <button class="preset-btn" data-preset="vibrant">Vibrant</button>
+              <button class="preset-btn" data-preset="subtle">Subtle</button>
+              <button class="preset-btn" data-preset="intense">Intense</button>
+            </div>
+          </div>
+          
+          <!-- CSS Output -->
+          <div class="css-output-title">Generated CSS</div>
+          <div class="css-output" id="css-output">
+.block-icon img {
+  opacity: 0.5;
+  width: 42px;
+  height: 42px;
+  filter: 
+    drop-shadow(0 0 6px var(--elemental-glow))
+    brightness(1)
+    saturate(1);
+}
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="style-section" id="comparison">
+      <h2>Style Comparison</h2>
+      <p class="description">
+        Side-by-side comparison of the current muted style versus a more vibrant alternative.
+      </p>
+      
+      <div class="comparison-row">
+        <div class="comparison-item">
+          <div class="static-block muted">
+            <div class="tablet">
+              <div class="block-icon">
+                <img src="/game_data/icons/elementals/fire.svg" alt="Fire">
+              </div>
+            </div>
+            <span class="number north">3</span>
+            <span class="number east">2</span>
+            <span class="number south">4</span>
+            <span class="number west">1</span>
+          </div>
+          <span class="comparison-label">Current (Muted)</span>
+        </div>
+        
+        <div class="comparison-item">
+          <div class="static-block vibrant">
+            <div class="tablet">
+              <div class="block-icon">
+                <img src="/game_data/icons/elementals/fire.svg" alt="Fire">
+              </div>
+            </div>
+            <span class="number north">3</span>
+            <span class="number east">2</span>
+            <span class="number south">4</span>
+            <span class="number west">1</span>
+          </div>
+          <span class="comparison-label">Vibrant</span>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <script>
+    // Elemental icon paths
+    const elementalIcons = {
+      fire: '/game_data/icons/elementals/fire.svg',
+      water: '/game_data/icons/elementals/water.svg',
+      forest: '/game_data/icons/elementals/forest.svg',
+      ice: '/game_data/icons/elementals/ice-final.svg'
+    };
+    
+    // Presets
+    const presets = {
+      muted: {
+        opacity: 0.5,
+        size: 42,
+        brightness: 1,
+        saturation: 1,
+        glowRadius: 6,
+        glowIntensity: 1
+      },
+      vibrant: {
+        opacity: 0.9,
+        size: 50,
+        brightness: 1.2,
+        saturation: 1.3,
+        glowRadius: 15,
+        glowIntensity: 1.5
+      },
+      subtle: {
+        opacity: 0.35,
+        size: 38,
+        brightness: 0.9,
+        saturation: 0.8,
+        glowRadius: 4,
+        glowIntensity: 0.7
+      },
+      intense: {
+        opacity: 1,
+        size: 56,
+        brightness: 1.4,
+        saturation: 1.5,
+        glowRadius: 20,
+        glowIntensity: 2
+      }
+    };
+    
+    // DOM elements
+    const previewBlock = document.getElementById('preview-block');
+    const previewIcon = document.getElementById('preview-icon');
+    const presetLabel = document.getElementById('preset-label');
+    const cssOutput = document.getElementById('css-output');
+    
+    // Sliders
+    const opacitySlider = document.getElementById('icon-opacity');
+    const sizeSlider = document.getElementById('icon-size');
+    const brightnessSlider = document.getElementById('icon-brightness');
+    const saturationSlider = document.getElementById('icon-saturation');
+    const glowRadiusSlider = document.getElementById('glow-radius');
+    const glowIntensitySlider = document.getElementById('glow-intensity');
+    
+    // Current elemental
+    let currentElemental = 'fire';
+    
+    // Update preview
+    function updatePreview() {
+      const opacity = parseFloat(opacitySlider.value);
+      const size = parseInt(sizeSlider.value);
+      const brightness = parseFloat(brightnessSlider.value);
+      const saturation = parseFloat(saturationSlider.value);
+      const glowRadius = parseInt(glowRadiusSlider.value);
+      const glowIntensity = parseFloat(glowIntensitySlider.value);
+      
+      // Update CSS variables
+      previewBlock.style.setProperty('--icon-opacity', opacity);
+      previewBlock.style.setProperty('--icon-size', size + 'px');
+      previewBlock.style.setProperty('--icon-brightness', brightness);
+      previewBlock.style.setProperty('--icon-saturation', saturation);
+      previewBlock.style.setProperty('--glow-radius', glowRadius + 'px');
+      previewBlock.style.setProperty('--glow-intensity', glowIntensity);
+      
+      // Update value displays
+      document.getElementById('icon-opacity-val').textContent = opacity.toFixed(2);
+      document.getElementById('icon-size-val').textContent = size + 'px';
+      document.getElementById('icon-brightness-val').textContent = brightness.toFixed(2);
+      document.getElementById('icon-saturation-val').textContent = saturation.toFixed(2);
+      document.getElementById('glow-radius-val').textContent = glowRadius + 'px';
+      document.getElementById('glow-intensity-val').textContent = glowIntensity.toFixed(1);
+      
+      // Update CSS output
+      const effectiveGlow = glowRadius * glowIntensity;
+      cssOutput.textContent = `.block-icon img {
+  opacity: ${opacity};
+  width: ${size}px;
+  height: ${size}px;
+  filter: 
+    drop-shadow(0 0 ${effectiveGlow.toFixed(0)}px var(--elemental-glow))
+    brightness(${brightness})
+    saturate(${saturation});
+}`;
+      
+      // Check if matches a preset
+      let matchedPreset = null;
+      for (const [name, preset] of Object.entries(presets)) {
+        if (
+          Math.abs(opacity - preset.opacity) < 0.01 &&
+          size === preset.size &&
+          Math.abs(brightness - preset.brightness) < 0.01 &&
+          Math.abs(saturation - preset.saturation) < 0.01 &&
+          glowRadius === preset.glowRadius &&
+          Math.abs(glowIntensity - preset.glowIntensity) < 0.01
+        ) {
+          matchedPreset = name;
+          break;
+        }
+      }
+      presetLabel.textContent = matchedPreset 
+        ? matchedPreset.charAt(0).toUpperCase() + matchedPreset.slice(1) 
+        : 'Custom';
+    }
+    
+    // Apply preset
+    function applyPreset(name) {
+      const preset = presets[name];
+      if (!preset) return;
+      
+      opacitySlider.value = preset.opacity;
+      sizeSlider.value = preset.size;
+      brightnessSlider.value = preset.brightness;
+      saturationSlider.value = preset.saturation;
+      glowRadiusSlider.value = preset.glowRadius;
+      glowIntensitySlider.value = preset.glowIntensity;
+      
+      updatePreview();
+    }
+    
+    // Set elemental
+    function setElemental(elemental) {
+      currentElemental = elemental;
+      previewIcon.src = elementalIcons[elemental];
+      
+      // Update block class for elemental colors
+      previewBlock.className = 'preview-block ' + elemental + ' p1';
+      
+      // Update active button
+      document.querySelectorAll('.elemental-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.elemental === elemental);
+      });
+    }
+    
+    // Event listeners
+    [opacitySlider, sizeSlider, brightnessSlider, saturationSlider, glowRadiusSlider, glowIntensitySlider].forEach(slider => {
+      slider.addEventListener('input', updatePreview);
+    });
+    
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+    });
+    
+    document.querySelectorAll('.elemental-btn').forEach(btn => {
+      btn.addEventListener('click', () => setElemental(btn.dataset.elemental));
+    });
+    
+    // Initialize
+    updatePreview();
+  </script>
+</body>
+</html>

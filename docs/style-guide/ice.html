@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ice Elemental - ZoneControl Style Guide</title>
+  <link rel="stylesheet" href="shared/styles.css">
+  <style>
+    /* Frost canvas positioning - inside tablet which has position:relative */
+    .frost-overlay-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <header class="style-header">
+    <h1>Ice Elemental</h1>
+    <p>Frozen status effect visuals</p>
+  </header>
+  
+  <nav class="page-nav">
+    <a href="index.html">Overview</a>
+    <a href="board.html">Board</a>
+    <a href="block.html">Block</a>
+    <a href="fire.html">Fire</a>
+    <a href="ice.html" class="active">Ice</a>
+  </nav>
+  
+  <nav class="toc">
+    <div class="toc-title">On This Page</div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#blocks">Blocks</a></li>
+      <li><a href="#frozen-effect">Frozen Status Effect</a></li>
+    </ul>
+  </nav>
+  
+  <main class="content">
+    
+    <!-- OVERVIEW SECTION -->
+    <section class="style-section" id="overview">
+      <h2>Overview</h2>
+      
+      <div class="identity-showcase">
+        <div class="identity-icon ice">
+          <img src="/game_data/icons/elementals/ice-final.svg" alt="Ice Elemental">
+        </div>
+        <div class="identity-info">
+          <span class="identity-name">Crystalline Ice Phoenix</span>
+          <span class="identity-desc">The Ice Elemental is represented by the crystalline ice phoenix icon. Ice blocks can use the Freeze ability to immobilize opponent blocks.</span>
+        </div>
+      </div>
+    </section>
+    
+    <!-- BLOCKS SECTION -->
+    <section class="style-section" id="blocks">
+      <h2>Blocks</h2>
+      <p>Standard Ice blocks for each player. The block border indicates ownership.</p>
+      
+      <div class="examples-row">
+        <div class="example-item">
+          <div class="block ice p1">
+            <div class="tablet">
+              <div class="block-icon">
+                <img src="/game_data/icons/elementals/ice-final.svg" alt="Ice" style="width: 100%; height: 100%; filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.5));">
+              </div>
+            </div>
+            <span class="number north">4</span>
+            <span class="number east">1</span>
+            <span class="number south">3</span>
+            <span class="number west">2</span>
+          </div>
+          <span class="example-label">Player 1</span>
+        </div>
+        
+        <div class="example-item">
+          <div class="block ice p2">
+            <div class="tablet">
+              <div class="block-icon">
+                <img src="/game_data/icons/elementals/ice-final.svg" alt="Ice" style="width: 100%; height: 100%; filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.5));">
+              </div>
+            </div>
+            <span class="number north">2</span>
+            <span class="number east">3</span>
+            <span class="number south">1</span>
+            <span class="number west">4</span>
+          </div>
+          <span class="example-label">Player 2</span>
+        </div>
+      </div>
+    </section>
+    
+    <!-- FROZEN EFFECT DEMO -->
+    <section class="style-section" id="frozen-effect">
+      <h2>Frozen Status Effect</h2>
+      <p>When a block is frozen, it displays a crystalline frost overlay with a centered turn counter. The frost recedes as turns decrement.</p>
+      
+      <style>
+        /* Frozen demo layout */
+        .frozen-demo-container {
+          display: flex;
+          align-items: flex-start;
+          gap: 40px;
+          margin-top: 24px;
+        }
+        
+        .frozen-demo-block {
+          position: relative;
+          width: 120px;
+          height: 120px;
+          margin: 16px;
+          flex-shrink: 0;
+        }
+        
+        .frozen-demo-block .tablet {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(145deg, #2a2622 0%, #1a1815 50%, #12100e 100%);
+          border-radius: 4px;
+          border: 2px solid var(--player2);
+          overflow: hidden;
+          box-shadow: 
+            inset 0 1px 0 rgba(255, 255, 255, 0.05),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+            0 4px 12px rgba(0, 0, 0, 0.5);
+          transition: border-color 0.5s;
+        }
+        
+        .frozen-demo-block .tablet::before,
+        .frozen-demo-block .tablet::after {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          border: 2px solid var(--gold);
+          opacity: 0.7;
+          transition: border-color 0.5s, opacity 0.5s;
+        }
+        .frozen-demo-block .tablet::before { top: 3px; left: 3px; border-right: none; border-bottom: none; }
+        .frozen-demo-block .tablet::after { bottom: 3px; right: 3px; border-left: none; border-top: none; }
+        
+        .frozen-demo-block.frozen .tablet {
+          border-color: var(--ice) !important;
+        }
+        .frozen-demo-block.frozen .tablet::before,
+        .frozen-demo-block.frozen .tablet::after {
+          border-color: var(--ice);
+          opacity: 0.5;
+        }
+        
+        .frozen-demo-block .block-icon {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 50px;
+          height: 50px;
+          transition: opacity 0.5s, filter 0.5s;
+        }
+        
+        .frozen-demo-block .block-icon img {
+          width: 100%;
+          height: 100%;
+          filter: drop-shadow(0 0 6px var(--fire-glow));
+        }
+        
+        .frozen-demo-block.frozen .block-icon img {
+          opacity: 0.3;
+          filter: saturate(0.2) brightness(1.2) drop-shadow(0 0 4px var(--ice-glow));
+        }
+        
+        .frozen-demo-block .number {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 24px;
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--gold-bright);
+          background: linear-gradient(180deg, #2a2622 0%, #1a1815 100%);
+          border: 2px solid var(--gold);
+          border-radius: 2px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+          z-index: 10;
+          transition: all 0.5s;
+        }
+        .frozen-demo-block .number.north { top: -8px; left: 50%; transform: translateX(-50%); }
+        .frozen-demo-block .number.south { bottom: -8px; left: 50%; transform: translateX(-50%); }
+        .frozen-demo-block .number.east { right: -8px; top: 50%; transform: translateY(-50%); }
+        .frozen-demo-block .number.west { left: -8px; top: 50%; transform: translateY(-50%); }
+        
+        .frozen-demo-block.frozen .number {
+          color: var(--ice-glow);
+          border-color: var(--ice);
+          background: linear-gradient(180deg, #1a2a35 0%, #102030 100%);
+        }
+        
+        /* Frost canvas */
+        .frost-canvas {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 5;
+          border-radius: 2px;
+        }
+        
+        /* Center frost number */
+        .frost-number {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 42px;
+          font-weight: 900;
+          z-index: 15;
+          font-family: 'Georgia', serif;
+          opacity: 0;
+          transition: opacity 0.4s;
+          color: rgba(202, 240, 248, 0.9);
+          text-shadow: 
+            0 0 10px rgba(144, 224, 239, 0.8),
+            0 0 20px rgba(144, 224, 239, 0.5),
+            0 0 30px rgba(144, 224, 239, 0.3),
+            0 2px 4px rgba(0, 0, 0, 0.3);
+          -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+        }
+        
+        .frozen-demo-block.frozen .frost-number {
+          opacity: 1;
+        }
+        
+        .frost-number::after {
+          content: attr(data-num);
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(
+            135deg,
+            transparent 20%,
+            rgba(255, 255, 255, 0.4) 40%,
+            rgba(255, 255, 255, 0.6) 50%,
+            rgba(255, 255, 255, 0.4) 60%,
+            transparent 80%
+          );
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          animation: crystal-shimmer 3s ease-in-out infinite;
+          background-size: 200% 200%;
+        }
+        
+        @keyframes crystal-shimmer {
+          0%, 100% { background-position: 100% 100%; }
+          50% { background-position: 0% 0%; }
+        }
+        
+        /* Controls */
+        .freeze-controls {
+          padding: 20px;
+          background: var(--bg-paper);
+          border-radius: 6px;
+          max-width: 400px;
+        }
+        
+        .freeze-controls h4 {
+          color: var(--ice);
+          font-size: 14px;
+          font-variant: small-caps;
+          margin-bottom: 12px;
+        }
+        
+        .btn-row {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        
+        .freeze-controls button {
+          padding: 8px 16px;
+          background: linear-gradient(180deg, #2a3a45 0%, #1a2a35 100%);
+          border: 1px solid var(--ice);
+          border-radius: 4px;
+          color: var(--ice-glow);
+          font-family: system-ui, sans-serif;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .freeze-controls button:hover {
+          background: linear-gradient(180deg, #3a4a55 0%, #2a3a45 100%);
+          box-shadow: 0 0 10px rgba(144, 224, 239, 0.3);
+        }
+        
+        .freeze-controls button.active {
+          background: var(--ice);
+          color: #0d1117;
+        }
+        
+        .auto-cycle {
+          margin-top: 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .auto-cycle label {
+          color: var(--text-muted);
+          font-size: 12px;
+          font-family: system-ui, sans-serif;
+        }
+        
+        .status-text {
+          margin-top: 12px;
+          padding: 10px;
+          background: rgba(144, 224, 239, 0.1);
+          border-radius: 4px;
+          font-size: 12px;
+          font-family: system-ui, sans-serif;
+          color: var(--ice-glow);
+        }
+      </style>
+      
+      <div class="frozen-demo-container">
+        <div class="frozen-demo-block frozen" id="demo-block">
+          <div class="tablet">
+            <canvas class="frost-canvas" id="frost-canvas"></canvas>
+            <div class="block-icon">
+              <img src="/game_data/icons/elementals/fire.svg" alt="Fire">
+            </div>
+            <span class="frost-number" id="frost-num" data-num="3">3</span>
+          </div>
+          <span class="number north">3</span>
+          <span class="number east">2</span>
+          <span class="number south">4</span>
+          <span class="number west">1</span>
+        </div>
+        
+        <div class="freeze-controls">
+          <h4>Freeze Stage</h4>
+          <div class="btn-row">
+            <button onclick="setStage(3)">Turn 3 (Full)</button>
+            <button onclick="setStage(2)">Turn 2</button>
+            <button onclick="setStage(1)">Turn 1</button>
+            <button onclick="setStage(0)">Thaw</button>
+          </div>
+          <div class="auto-cycle">
+            <input type="checkbox" id="auto-cycle" checked>
+            <label for="auto-cycle">Auto-cycle (3s per stage)</label>
+          </div>
+          <div class="status-text" id="status">Stage: Turn 3 - Full freeze, edge frost at maximum</div>
+        </div>
+      </div>
+      
+      <div class="effect-notes">
+        <h4>Effect Details</h4>
+        <ul>
+          <li>Frozen blocks cannot be flipped by any means</li>
+          <li>Counter decrements at the start of the owner's turn</li>
+          <li>Frost overlay recedes as turns decrease (100% at turn 3, 66% at turn 2, 33% at turn 1)</li>
+          <li>Center number uses Georgia serif, 42px, with crystalline shimmer</li>
+          <li>Block border and corner accents change to ice color when frozen</li>
+        </ul>
+      </div>
+    </section>
+    
+  </main>
+  
+  <script>
+    // Frost shader with edge distance control (from Design 1)
+    const frostVertexSrc = `#version 300 es
+      in vec2 a_position;
+      out vec2 v_uv;
+      void main() {
+        v_uv = a_position * 0.5 + 0.5;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+    
+    const frostFragmentSrc = `#version 300 es
+      precision highp float;
+      in vec2 v_uv;
+      out vec4 fragColor;
+      
+      uniform float u_time;
+      uniform float u_edgeFrost;
+      uniform float u_freezeProgress;
+      uniform float u_melt;
+      
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+      }
+      
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+          mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+          f.y
+        );
+      }
+      
+      float fbm(vec2 p) {
+        float sum = 0.0;
+        float amp = 0.5;
+        for (int i = 0; i < 5; i++) {
+          sum += noise(p) * amp;
+          p *= 2.0;
+          amp *= 0.5;
+        }
+        return sum;
+      }
+      
+      void main() {
+        vec2 uv = v_uv;
+        float t = u_time * 0.5;
+        
+        float edgeDist = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+        
+        float frostNoise = fbm(uv * 8.0 + t * 0.1);
+        float frostNoise2 = fbm(uv * 12.0 - t * 0.15);
+        
+        float frostDepth = u_edgeFrost * 0.35;
+        float frostBoundary = edgeDist - frostDepth + frostNoise * 0.06 + frostNoise2 * 0.04;
+        
+        float frost = smoothstep(0.08, 0.0, frostBoundary) * u_freezeProgress;
+        
+        if (u_melt > 0.0) {
+          float meltLine = 1.0 - u_melt + frostNoise * 0.15;
+          float meltMask = smoothstep(meltLine, meltLine + 0.1, uv.y);
+          frost *= meltMask;
+        }
+        
+        float crystalDetail = pow(fbm(uv * 20.0), 2.0);
+        frost += crystalDetail * 0.2 * frost;
+        
+        float sparkle = pow(noise(uv * 50.0 + t * 2.0), 8.0);
+        frost += sparkle * 0.35 * frost;
+        
+        float edgeGlow = smoothstep(0.12, 0.0, frostBoundary) - smoothstep(0.02, 0.0, frostBoundary);
+        
+        vec3 iceColor = mix(
+          vec3(0.65, 0.88, 1.0),
+          vec3(0.85, 0.95, 1.0),
+          frostNoise
+        );
+        iceColor += vec3(0.25, 0.3, 0.35) * edgeGlow;
+        
+        float pulse = 0.92 + sin(t * 2.0) * 0.08;
+        float alpha = frost * 0.55 * pulse;
+        
+        fragColor = vec4(iceColor, alpha);
+      }
+    `;
+    
+    // State
+    let currentStage = 3;
+    let targetEdgeFrost = 1.0;
+    let currentEdgeFrost = 0.0;
+    let freezeProgress = 0.0;
+    let meltProgress = 0.0;
+    let autoCycleEnabled = true;
+    let lastStageChange = 0;
+    const STAGE_DURATION = 3000;
+    
+    const stageDescriptions = {
+      3: "Turn 3 - Full freeze, edge frost at maximum",
+      2: "Turn 2 - Frost receding, thaw beginning",
+      1: "Turn 1 - Minimal frost, almost thawed",
+      0: "Thawed - Block returns to normal"
+    };
+    
+    // WebGL setup
+    const canvas = document.getElementById('frost-canvas');
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false });
+    canvas.width = 120;
+    canvas.height = 120;
+    gl.viewport(0, 0, 120, 120);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    
+    const vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, frostVertexSrc);
+    gl.compileShader(vs);
+    
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, frostFragmentSrc);
+    gl.compileShader(fs);
+    
+    const program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+    
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    
+    const aPos = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+    
+    const uTime = gl.getUniformLocation(program, 'u_time');
+    const uEdgeFrost = gl.getUniformLocation(program, 'u_edgeFrost');
+    const uFreezeProgress = gl.getUniformLocation(program, 'u_freezeProgress');
+    const uMelt = gl.getUniformLocation(program, 'u_melt');
+    
+    // DOM elements
+    const demoBlock = document.getElementById('demo-block');
+    const frostNum = document.getElementById('frost-num');
+    const autoCycleCheckbox = document.getElementById('auto-cycle');
+    const statusEl = document.getElementById('status');
+    
+    autoCycleCheckbox.addEventListener('change', (e) => {
+      autoCycleEnabled = e.target.checked;
+      if (autoCycleEnabled) {
+        lastStageChange = performance.now();
+      }
+    });
+    
+    function setStage(stage) {
+      currentStage = stage;
+      lastStageChange = performance.now();
+      
+      statusEl.textContent = "Stage: " + stageDescriptions[stage];
+      
+      if (stage > 0) {
+        frostNum.textContent = stage;
+        frostNum.setAttribute('data-num', stage);
+        demoBlock.classList.add('frozen');
+        meltProgress = 0;
+      } else {
+        demoBlock.classList.remove('frozen');
+      }
+      
+      targetEdgeFrost = stage / 3;
+    }
+    
+    function animate(time) {
+      const t = time * 0.001;
+      
+      if (autoCycleEnabled && time - lastStageChange > STAGE_DURATION) {
+        const nextStage = currentStage > 0 ? currentStage - 1 : 3;
+        setStage(nextStage);
+      }
+      
+      const transitionSpeed = 0.04;
+      currentEdgeFrost += (targetEdgeFrost - currentEdgeFrost) * transitionSpeed;
+      
+      const targetProgress = currentStage > 0 ? 1.0 : 0.0;
+      freezeProgress += (targetProgress - freezeProgress) * transitionSpeed;
+      
+      if (currentStage === 0) {
+        meltProgress = Math.min(meltProgress + 0.015, 1.0);
+      }
+      
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(uTime, t);
+      gl.uniform1f(uEdgeFrost, currentEdgeFrost);
+      gl.uniform1f(uFreezeProgress, freezeProgress);
+      gl.uniform1f(uMelt, currentStage === 0 ? meltProgress : 0.0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      
+      frostNum.style.opacity = freezeProgress * (1 - meltProgress);
+      
+      requestAnimationFrame(animate);
+    }
+    
+    // Start
+    setStage(3);
+    freezeProgress = 1.0;
+    currentEdgeFrost = 1.0;
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

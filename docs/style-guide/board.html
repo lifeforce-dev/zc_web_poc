@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Board - ZoneControl Style Guide</title>
+  <link rel="stylesheet" href="shared/styles.css">
+  <style>
+    .board-layout {
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      gap: 12px;
+      padding: 20px;
+      background: #050404;
+      border-radius: 4px;
+      border: 1px solid #12100e;
+      flex-shrink: 0;
+    }
+    
+    .wall {
+      width: 100px;
+      height: 100px;
+      position: relative;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .wall canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .tile {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(145deg, #252320 0%, #1a1815 100%);
+      border-radius: 4px;
+      border: 1px solid #3a3630;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .block {
+      --elemental-color: var(--fire);
+      --elemental-glow: var(--fire-glow);
+      --player-color: var(--player1);
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    
+    .tablet {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, #2a2622 0%, #1a1815 50%, #12100e 100%);
+      border-radius: 4px;
+      border: 2px solid var(--player-color);
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .tablet::before, .tablet::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--gold);
+      opacity: 0.7;
+    }
+    .tablet::before { top: 3px; left: 3px; border-right: none; border-bottom: none; }
+    .tablet::after { bottom: 3px; right: 3px; border-left: none; border-top: none; }
+    
+    .block-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      height: 42px;
+    }
+    
+    .block-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: var(--elemental-color);
+      filter: drop-shadow(0 0 6px var(--elemental-glow));
+      opacity: 0.5;
+    }
+    
+    .block-icon img {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 6px var(--elemental-glow));
+      opacity: 0.5;
+    }
+    
+    .number {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 22px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-bright);
+      background: linear-gradient(180deg, #2a2622 0%, #1a1815 100%);
+      border: 2px solid var(--gold);
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+    .number.north { top: -6px; left: 50%; transform: translateX(-50%); }
+    .number.south { bottom: -6px; left: 50%; transform: translateX(-50%); }
+    .number.east { right: -6px; top: 50%; transform: translateY(-50%); }
+    .number.west { left: -6px; top: 50%; transform: translateY(-50%); }
+    
+    .block.fire { --elemental-color: var(--fire); --elemental-glow: var(--fire-glow); }
+    .block.water { --elemental-color: var(--water); --elemental-glow: var(--water-glow); }
+    .block.forest { --elemental-color: var(--forest); --elemental-glow: var(--forest-glow); }
+    .block.ice { --elemental-color: var(--ice); --elemental-glow: var(--ice-glow); }
+    .block.p1 { --player-color: var(--player1); }
+    .block.p2 { --player-color: var(--player2); }
+    
+    /* Tuning Panel */
+    .tuning-panel {
+      background: var(--bg-paper);
+      border-radius: 6px;
+      padding: 24px;
+      min-width: 320px;
+    }
+    
+    .tuning-panel h3 {
+      color: var(--gold);
+      font-size: 14px;
+      font-variant: small-caps;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(212, 168, 85, 0.2);
+    }
+    
+    .tuning-group {
+      margin-bottom: 16px;
+    }
+    
+    .tuning-group label {
+      display: block;
+      color: #8b949e;
+      font-size: 12px;
+      margin-bottom: 6px;
+      font-family: system-ui, sans-serif;
+    }
+    
+    .tuning-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .tuning-row input[type="range"] {
+      flex: 1;
+      height: 4px;
+      background: #2a2622;
+      border-radius: 2px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
+    .tuning-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--gold);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .tuning-row span {
+      min-width: 40px;
+      text-align: right;
+      font-size: 12px;
+      color: var(--gold-bright);
+      font-family: monospace;
+    }
+    
+    .tuning-section {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tuning-section h4 {
+      color: #8b949e;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      font-family: system-ui, sans-serif;
+    }
+    
+    .reset-btn {
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid #3a3630;
+      border-radius: 4px;
+      color: #8b949e;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: system-ui, sans-serif;
+      transition: all 0.2s;
+    }
+    
+    .reset-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <header class="style-header">
+    <h1>Game Board</h1>
+    <p>Board layout with wall tiles and tuning controls</p>
+  </header>
+  
+  <nav class="page-nav">
+    <a href="index.html">Overview</a>
+    <a href="board.html" class="active">Board</a>
+    <a href="block.html">Block</a>
+    <a href="fire.html">Fire</a>
+    <a href="ice.html">Ice</a>
+  </nav>
+  
+  <nav class="toc">
+    <div class="toc-title">On This Page</div>
+    <ul>
+      <li><a href="#board">Game Board</a></li>
+      <li><a href="#wall-tuning">Wall Effect Tuning</a></li>
+    </ul>
+  </nav>
+  
+  <main class="content">
+    
+    <section class="style-section" id="board">
+      <h2>Void Storm</h2>
+      <p class="theme-tagline" style="color: var(--gold); font-style: italic; margin-bottom: 16px;">Ancient energies swirl in the darkness between realms, where lightning crackles through ethereal storm clouds.</p>
+      <p>A 4x4 game board with wall tiles, empty tiles, and blocks. Wall tiles feature the Void Storm effect - swirling purple clouds pierced by diffuse lightning flashes that illuminate the void.</p>
+      
+      <div class="board-layout">
+        <div class="board">
+          <div class="wall"><canvas></canvas></div>
+          <div class="block fire p1">
+            <div class="tablet"><div class="block-icon"><img src="/game_data/icons/elementals/fire.svg" alt="Fire"></div></div>
+            <span class="number north">3</span><span class="number east">2</span><span class="number south">4</span><span class="number west">1</span>
+          </div>
+          <div class="block water p2">
+            <div class="tablet"><div class="block-icon"><svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="30" ry="25"/><path d="M50 15 C35 35 25 50 25 65 C25 82 36 90 50 90 C64 90 75 82 75 65 C75 50 65 35 50 15Z"/></svg></div></div>
+            <span class="number north">5</span><span class="number east">1</span><span class="number south">2</span><span class="number west">2</span>
+          </div>
+          <div class="wall"><canvas></canvas></div>
+          
+          <div class="tile"></div>
+          <div class="wall"><canvas></canvas></div>
+          <div class="tile"></div>
+          <div class="block forest p1">
+            <div class="tablet"><div class="block-icon"><svg viewBox="0 0 100 100"><path d="M50 10L20 45H35L15 75H42V90H58V75H85L65 45H80L50 10Z"/></svg></div></div>
+            <span class="number north">2</span><span class="number east">3</span><span class="number south">1</span><span class="number west">4</span>
+          </div>
+          
+          <div class="tile"></div>
+          <div class="wall"><canvas></canvas></div>
+          <div class="wall"><canvas></canvas></div>
+          <div class="tile"></div>
+          
+          <div class="block ice p2">
+            <div class="tablet"><div class="block-icon"><img src="/game_data/icons/elementals/ice-final.svg" alt="Ice"></div></div>
+            <span class="number north">1</span><span class="number east">4</span><span class="number south">3</span><span class="number west">2</span>
+          </div>
+          <div class="tile"></div>
+          <div class="tile"></div>
+          <div class="wall"><canvas></canvas></div>
+        </div>
+        
+        <div class="tuning-panel" id="wall-tuning">
+          <h3>Void Storm Tuning</h3>
+          
+          <div class="tuning-section">
+            <h4>Lightning Flash</h4>
+            
+            <div class="tuning-group">
+              <label>Flash Frequency Min</label>
+              <div class="tuning-row">
+                <input type="range" id="freq-min" min="0.01" max="0.2" step="0.01" value="0.05">
+                <span id="freq-min-val">0.05</span>
+              </div>
+            </div>
+            
+            <div class="tuning-group">
+              <label>Flash Frequency Max</label>
+              <div class="tuning-row">
+                <input type="range" id="freq-max" min="0.1" max="0.5" step="0.01" value="0.25">
+                <span id="freq-max-val">0.25</span>
+              </div>
+            </div>
+            
+            <div class="tuning-group">
+              <label>Brightness Min</label>
+              <div class="tuning-row">
+                <input type="range" id="bright-min" min="0.05" max="0.5" step="0.01" value="0.20">
+                <span id="bright-min-val">0.20</span>
+              </div>
+            </div>
+            
+            <div class="tuning-group">
+              <label>Brightness Max</label>
+              <div class="tuning-row">
+                <input type="range" id="bright-max" min="0.3" max="1.0" step="0.01" value="0.60">
+                <span id="bright-max-val">0.60</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tuning-section">
+            <h4>Cloud Motion</h4>
+            
+            <div class="tuning-group">
+              <label>Swirl Speed</label>
+              <div class="tuning-row">
+                <input type="range" id="swirl-speed" min="0.05" max="0.5" step="0.01" value="0.20">
+                <span id="swirl-speed-val">0.20</span>
+              </div>
+            </div>
+            
+            <div class="tuning-group">
+              <label>Drift Speed</label>
+              <div class="tuning-row">
+                <input type="range" id="drift-speed" min="0.05" max="0.5" step="0.01" value="0.22">
+                <span id="drift-speed-val">0.22</span>
+              </div>
+            </div>
+          </div>
+          
+          <button class="reset-btn" onclick="resetDefaults()">Reset to Defaults</button>
+        </div>
+      </div>
+    </section>
+    
+  </main>
+  
+  <script>
+    // Shader sources with uniform-based tuning
+    const vertexShaderSrc = `#version 300 es
+      in vec2 a_position;
+      out vec2 v_uv;
+      void main() {
+        v_uv = a_position * 0.5 + 0.5;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+    
+    const fragmentShaderSrc = `#version 300 es
+      precision highp float;
+      in vec2 v_uv;
+      out vec4 fragColor;
+      
+      uniform float u_time;
+      uniform float u_seed;
+      uniform float u_freqMin;
+      uniform float u_freqMax;
+      uniform float u_brightMin;
+      uniform float u_brightMax;
+      uniform float u_swirlSpeed;
+      uniform float u_driftSpeed;
+      
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+      
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+        vec2 i = floor(v + dot(v, C.yy));
+        vec2 x0 = v - i + dot(i, C.xx);
+        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289(i);
+        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+        m = m*m; m = m*m;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+        vec3 g;
+        g.x = a0.x * x0.x + h.x * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+      
+      float hash(float n) {
+        return fract(sin(n) * 43758.5453);
+      }
+      
+      void main() {
+        vec2 uv = v_uv;
+        float t = u_time * u_driftSpeed;
+        vec2 offset = vec2(sin(u_seed * 12.34) * 100.0, cos(u_seed * 56.78) * 100.0);
+        vec3 color = vec3(0.0);
+        
+        vec2 p = (uv + offset) * 2.0;
+        vec2 center = vec2(0.5);
+        vec2 fromCenter = uv - center;
+        float dist = length(fromCenter);
+        float angle = atan(fromCenter.y, fromCenter.x);
+        float swirlAmount = (1.0 - dist) * 0.3;
+        angle += t * (u_swirlSpeed / u_driftSpeed) * 0.5 + swirlAmount;
+        vec2 swirled = center + vec2(cos(angle), sin(angle)) * dist;
+        
+        float cloud1 = snoise((swirled + offset) * 3.0 + vec2(t * 0.2, t * 0.15));
+        float cloud2 = snoise((swirled + offset) * 4.5 + vec2(-t * 0.15, t * 0.1) + 30.0);
+        float cloud3 = snoise((swirled + offset) * 2.0 + vec2(t * 0.1, -t * 0.12) + 60.0);
+        float clouds = cloud1 * 0.5 + cloud2 * 0.3 + cloud3 * 0.2;
+        clouds = clouds * 0.5 + 0.5;
+        clouds = smoothstep(0.3, 0.7, clouds);
+        
+        vec3 cloudColor = vec3(0.08, 0.04, 0.12);
+        color += cloudColor * clouds * 0.8;
+        
+        float totalGlow = 0.0;
+        for (int i = 0; i < 4; i++) {
+          float fi = float(i);
+          float glowSeed = u_seed + fi * 5.17;
+          
+          float flashSpeed = u_freqMin + hash(glowSeed) * (u_freqMax - u_freqMin);
+          float flashPhase = fract(t * (flashSpeed / u_driftSpeed) + hash(glowSeed + 1.0));
+          
+          float flash = smoothstep(0.0, 0.05, flashPhase) * smoothstep(0.2, 0.08, flashPhase);
+          flash = pow(flash, 0.5);
+          
+          float brightness = u_brightMin + hash(glowSeed + 10.0) * (u_brightMax - u_brightMin);
+          flash *= brightness;
+          
+          if (flash > 0.01) {
+            vec2 glowPos = vec2(
+              hash(glowSeed + 2.0 + floor(t * flashSpeed)),
+              hash(glowSeed + 3.0 + floor(t * flashSpeed))
+            );
+            
+            float glowDist = length(uv - glowPos);
+            float glow = exp(-glowDist * 4.0) * flash;
+            glow *= clouds * 1.5;
+            
+            totalGlow += glow;
+          }
+        }
+        
+        vec3 glowColor = vec3(0.4, 0.15, 0.6);
+        color += totalGlow * glowColor * 0.6;
+        color += totalGlow * vec3(0.6, 0.3, 0.8) * 0.3;
+        
+        float ambientFlash = totalGlow * 0.2;
+        color += vec3(0.03, 0.01, 0.05) * ambientFlash;
+        
+        float vignette = 1.0 - length(uv - 0.5) * 0.4;
+        color *= vignette;
+        
+        fragColor = vec4(color, 1.0);
+      }
+    `;
+    
+    // Default values
+    const DEFAULTS = {
+      freqMin: 0.05,
+      freqMax: 0.25,
+      brightMin: 0.20,
+      brightMax: 0.60,
+      swirlSpeed: 0.20,
+      driftSpeed: 0.22
+    };
+    
+    // Current values
+    let params = { ...DEFAULTS };
+    
+    // Wall instances
+    const wallInstances = [];
+    
+    function initWall(canvas, seed) {
+      const gl = canvas.getContext('webgl2');
+      if (!gl) return null;
+      
+      canvas.width = 100;
+      canvas.height = 100;
+      gl.viewport(0, 0, 100, 100);
+      
+      const vs = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vs, vertexShaderSrc);
+      gl.compileShader(vs);
+      
+      const fs = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fs, fragmentShaderSrc);
+      gl.compileShader(fs);
+      
+      const program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+      
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+      
+      const aPos = gl.getAttribLocation(program, 'a_position');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+      
+      const uniforms = {
+        time: gl.getUniformLocation(program, 'u_time'),
+        seed: gl.getUniformLocation(program, 'u_seed'),
+        freqMin: gl.getUniformLocation(program, 'u_freqMin'),
+        freqMax: gl.getUniformLocation(program, 'u_freqMax'),
+        brightMin: gl.getUniformLocation(program, 'u_brightMin'),
+        brightMax: gl.getUniformLocation(program, 'u_brightMax'),
+        swirlSpeed: gl.getUniformLocation(program, 'u_swirlSpeed'),
+        driftSpeed: gl.getUniformLocation(program, 'u_driftSpeed')
+      };
+      
+      gl.uniform1f(uniforms.seed, seed);
+      
+      return { gl, program, vao, uniforms };
+    }
+    
+    function updateUniforms(instance) {
+      const { gl, uniforms } = instance;
+      gl.useProgram(instance.program);
+      gl.uniform1f(uniforms.freqMin, params.freqMin);
+      gl.uniform1f(uniforms.freqMax, params.freqMax);
+      gl.uniform1f(uniforms.brightMin, params.brightMin);
+      gl.uniform1f(uniforms.brightMax, params.brightMax);
+      gl.uniform1f(uniforms.swirlSpeed, params.swirlSpeed);
+      gl.uniform1f(uniforms.driftSpeed, params.driftSpeed);
+    }
+    
+    function render(time) {
+      const t = time * 0.001;
+      
+      wallInstances.forEach(instance => {
+        const { gl, uniforms, vao } = instance;
+        gl.useProgram(instance.program);
+        gl.bindVertexArray(vao);
+        gl.uniform1f(uniforms.time, t);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      });
+      
+      requestAnimationFrame(render);
+    }
+    
+    // Initialize walls
+    document.querySelectorAll('.wall canvas').forEach((canvas, i) => {
+      const instance = initWall(canvas, i * 8.91 + Math.random() * 100);
+      if (instance) {
+        wallInstances.push(instance);
+        updateUniforms(instance);
+      }
+    });
+    
+    requestAnimationFrame(render);
+    
+    // Slider controls
+    const sliders = {
+      'freq-min': 'freqMin',
+      'freq-max': 'freqMax',
+      'bright-min': 'brightMin',
+      'bright-max': 'brightMax',
+      'swirl-speed': 'swirlSpeed',
+      'drift-speed': 'driftSpeed'
+    };
+    
+    Object.entries(sliders).forEach(([id, param]) => {
+      const slider = document.getElementById(id);
+      const display = document.getElementById(id + '-val');
+      
+      slider.addEventListener('input', () => {
+        params[param] = parseFloat(slider.value);
+        display.textContent = slider.value;
+        wallInstances.forEach(updateUniforms);
+      });
+    });
+    
+    function resetDefaults() {
+      params = { ...DEFAULTS };
+      
+      Object.entries(sliders).forEach(([id, param]) => {
+        const slider = document.getElementById(id);
+        const display = document.getElementById(id + '-val');
+        slider.value = params[param];
+        display.textContent = params[param].toFixed(2);
+      });
+      
+      wallInstances.forEach(updateUniforms);
+    }
+  </script>
+</body>
+</html>

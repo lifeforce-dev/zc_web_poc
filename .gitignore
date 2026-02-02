@@ -14,4 +14,7 @@ dist/
 .DS_Store
 .vscode/
 
+# Exploration designs - not for version control
+docs/exploration/
+
 logs/
