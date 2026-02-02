@@ -614,6 +614,18 @@ a:hover {
   margin: 0;
 }
 
+/* Mobile responsive for tuning sections */
+@media (max-width: 600px) {
+  .tuning-with-demo {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .tuning-with-demo .tuning-panel {
+    width: 100%;
+  }
+}
+
 /* ==========================================
    FROZEN EFFECT STYLES
    ========================================== */
