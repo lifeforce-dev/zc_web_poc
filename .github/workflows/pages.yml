@@ -5,6 +5,8 @@ on:
     branches: [main, master]
     paths:
       - 'frontend/**'
+      - 'docs/**'
+      - 'backend/game_data/**'
       - '.github/workflows/pages.yml'
 
   workflow_dispatch:
@@ -41,6 +43,15 @@ jobs:
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
           VITE_WS_BASE_URL: ${{ vars.VITE_WS_BASE_URL }}
         run: npm run build
+
+      - name: Add docs and game_data to build
+        run: |
+          # Copy docs (style-guide, etc.)
+          cp -r docs/* frontend/dist/
+          
+          # Copy game_data assets (single source of truth)
+          mkdir -p frontend/dist/game_data
+          cp -r backend/game_data/* frontend/dist/game_data/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
