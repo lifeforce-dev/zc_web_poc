@@ -6,7 +6,7 @@ Frontend is live at:
 https://lifeforce-dev.github.io/zc_web_poc/
 
 Style Guide:
-https://lifeforce-dev.github.io/zc_web_poc/style-guide
+https://lifeforce-dev.github.io/zc_web_poc/docs
 
 ## Local Run
 
